@@ -68,7 +68,7 @@ func GetInfo() http.Handler {
 	})
 }
 
-func Serve() {
+func Handle() {
 	http.Handle("/", http.FileServer(http.Dir("./public")))
 	http.Handle("/on", TurnOnHandler())
 	http.Handle("/off", TurnOffHandler())

@@ -14,7 +14,7 @@ func main() {
 	flag.StringVar(&iface, "iface", iface, "Network interface to bind to.")
 	flag.Parse()
 
-	api.Serve()
+	api.Handle()
 
 	fmt.Printf("Serving at http://%v\n", iface)
 	log.Fatal(http.ListenAndServe(iface, nil))
