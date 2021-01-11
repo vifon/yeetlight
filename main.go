@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -15,5 +16,6 @@ func main() {
 
 	api.Serve()
 
+	fmt.Printf("Serving at http://%v\n", iface)
 	log.Fatal(http.ListenAndServe(iface, nil))
 }
