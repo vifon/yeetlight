@@ -92,9 +92,11 @@
        },
        setBrightness() {
          this.$http.post("/brightness?bulb=" + this.addr + "&brightness=" + this.brightness)
+         this.power = true
        },
        setTemperature() {
          this.$http.post("/temperature?bulb=" + this.addr + "&temperature=" + this.temperature)
+         this.power = true
        }
      },
      computed: {
