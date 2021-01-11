@@ -3,18 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"os/exec"
-	"regexp"
-	"strings"
 )
-
-func bulb(r *http.Request, args ...string) *exec.Cmd {
-	bulb := r.URL.Query().Get("bulb")
-	if len(bulb) > 0 {
-		args = append([]string{"--ip", bulb}, args...)
-	}
-	return exec.Command("yee", args...)
-}
 
 func TurnOnHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -56,24 +45,6 @@ func Temperature() http.Handler {
 			http.Error(w, "404 Not Found", http.StatusNotFound)
 		}
 	})
-}
-
-func parseInfo(info string) map[string]*string {
-	lines := strings.Split(info, "\n")
-
-	parsed := make(map[string]*string)
-	for _, line := range lines {
-		re := regexp.MustCompile(`\* ([^:]+): (.+)`)
-		matches := re.FindStringSubmatch(line)
-		if matches != nil {
-			if matches[2] == "None" {
-				parsed[matches[1]] = nil
-			} else {
-				parsed[matches[1]] = &matches[2]
-			}
-		}
-	}
-	return parsed
 }
 
 func GetInfo() http.Handler {
