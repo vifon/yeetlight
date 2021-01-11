@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Yeetlight</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+    <div id="app">
+      <div class="section">
+        <div class="columns">
+          <bulb addr="192.168.2.161"></bulb>
+          <bulb addr="192.168.2.162"></bulb>
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+
+  <template id="bulb-template">
+    <div class="column">
+      <center>
+        <div>{{ name || addr }}</div>
+        <div>
+          <button class="button"
+                  :class="power ? 'is-primary' : ''"
+                  @click="turnOn">ON</button>
+          <button class="button"
+                  :class="power ? '' : 'is-primary'"
+                  @click="turnOff">OFF</button>
+        </div>
+        <table>
+          <tr>
+            <td>Brightness</td>
+            <td>
+              <input type="range"
+                     min="0" max="100"
+                     name="brightness"
+                     value="brightness"
+                     v-model="brightness"
+                     @change="setBrightness"
+              />
+            </td>
+            <td>{{ brightness }}</td>
+          </tr>
+          <tr>
+            <td>Temperature</td>
+            <td>
+              <input type="range"
+                     min="1700" max="6500"
+                     name="temperature"
+                     value="temperature"
+                     v-model="temperature"
+                     @change="setTemperature"
+              />
+            </td>
+            <td>{{ temperature }}</td>
+          </tr>
+        </table>
+      </center>
+    </div>
+  </template>
+
+  <script>
+   'use strict';
+
+   Vue.component('bulb', {
+     props: ['addr', 'name'],
+     template: "#bulb-template",
+     data() {
+       return {
+         powerRaw: null,
+         brightness: null,
+         temperature: null
+       }
+     },
+     methods: {
+       turnOn() {
+         this.$http.post("/on?bulb=" + this.addr)
+         this.power = true
+       },
+       turnOff() {
+         this.$http.post("/off?bulb=" + this.addr)
+         this.power = false
+       },
+       setBrightness() {
+         this.$http.post("/brightness?bulb=" + this.addr + "&brightness=" + this.brightness)
+       },
+       setTemperature() {
+         this.$http.post("/temperature?bulb=" + this.addr + "&temperature=" + this.temperature)
+       }
+     },
+     computed: {
+       power: {
+         get() {
+           return this.powerRaw == "on"
+         },
+         set(newValue) {
+           this.powerRaw = newValue ? "on" : "off"
+         }
+       }
+     },
+     mounted() {
+       this.$http.get("/info?bulb=" + this.addr).then(res => {
+         const info = res.body
+         this.brightness = parseInt(info.current_brightness)
+         this.temperature = parseInt(info.ct)
+         this.powerRaw = info.power
+       })
+     }
+   });
+
+   var app = new Vue({
+     el: '#app',
+     methods: {},
+     created() {},
+   })
+  </script>
+</html>
