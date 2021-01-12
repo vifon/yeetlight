@@ -20,8 +20,3 @@ input[type="range"]::-moz-range-track {
 .disabled {
   opacity: 30%;
 }
-
-.bulb {
-  margin: auto;
-  width: 50%;
-}
