@@ -85,20 +85,24 @@
      },
      methods: {
        turnOn() {
-         this.$http.post("/on?bulb=" + this.addr)
-         this.power = true
+         this.$http.post("/on?bulb=" + this.addr).then(res => {
+           this.power = true
+         })
        },
        turnOff() {
-         this.$http.post("/off?bulb=" + this.addr)
-         this.power = false
+         this.$http.post("/off?bulb=" + this.addr).then(res => {
+           this.power = false
+         })
        },
        setBrightness() {
-         this.$http.post("/brightness?bulb=" + this.addr + "&brightness=" + this.brightness)
-         this.power = true
+         this.$http.post("/brightness?bulb=" + this.addr + "&brightness=" + this.brightness).then(res => {
+           this.power = true
+         })
        },
        setTemperature() {
-         this.$http.post("/temperature?bulb=" + this.addr + "&temperature=" + this.temperature)
-         this.power = true
+         this.$http.post("/temperature?bulb=" + this.addr + "&temperature=" + this.temperature).then(res => {
+           this.power = true
+         })
        }
      },
      computed: {
