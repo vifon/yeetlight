@@ -31,10 +31,10 @@
         <div>
           <button class="button"
                   :class="power === true ? 'is-primary' : ''"
-                  @click="turnOn">ON</button>
+                  @click="power = true">ON</button>
           <button class="button"
                   :class="power === false ? 'is-primary' : ''"
-                  @click="turnOff">OFF</button>
+                  @click="power = false">OFF</button>
         </div>
         <table class="fading"
                :class="{ disabled: !power }">
@@ -46,8 +46,8 @@
                      step="5"
                      name="brightness"
                      value="brightness"
-                     v-model="brightness"
-                     @change="setBrightness"
+                     v-model="rawBrightness"
+                     @change="brightness = rawBrightness"
               />
             </td>
             <td>{{ brightness }}%</td>
@@ -60,8 +60,8 @@
                      step="50"
                      name="temperature"
                      value="temperature"
-                     v-model="temperature"
-                     @change="setTemperature"
+                     v-model="rawTemperature"
+                     @change="temperature = rawTemperature"
               />
             </td>
             <td>{{ temperature }}K</td>
@@ -79,56 +79,63 @@
      template: "#bulb-template",
      data() {
        return {
-         powerRaw: null,
-         brightness: null,
-         temperature: null
-       }
-     },
-     methods: {
-       turnOn() {
-         this.$http.post("/on?bulb=" + this.addr).then(res => {
-           this.power = true
-         })
-       },
-       turnOff() {
-         this.$http.post("/off?bulb=" + this.addr).then(res => {
-           this.power = false
-         })
-       },
-       setBrightness() {
-         this.$http.post("/brightness?bulb=" + this.addr + "&brightness=" + this.brightness).then(res => {
-           this.power = true
-         })
-       },
-       setTemperature() {
-         this.$http.post("/temperature?bulb=" + this.addr + "&temperature=" + this.temperature).then(res => {
-           this.power = true
-         })
+         rawPower: undefined,
+         rawBrightness: undefined,
+         rawTemperature: undefined
        }
      },
      computed: {
        power: {
          get() {
-           switch (this.powerRaw) {
-             case "on":
-               return true
-             case "off":
-               return false
-             default:
-               return undefined
-           }
+           return this.rawPower
          },
          set(newValue) {
-           this.powerRaw = newValue ? "on" : "off"
+           switch (newValue) {
+             case true:
+             case false:
+               this.$http.post(
+                 "/"
+                 + (newValue ? "on" : "off")
+                 + "?bulb=" + this.addr
+               ).then(res => {
+                 this.rawPower = newValue
+               })
+             default:
+               this.rawPower = undefined
+           }
+         }
+       },
+       temperature: {
+         get() {
+           return this.rawTemperature
+         },
+         set(newValue) {
+           this.$http.post(
+             "/temperature?bulb=" + this.addr + "&temperature=" + newValue
+           ).then(res => {
+             this.rawPower = true
+           })
+         }
+       },
+       brightness: {
+         get() {
+           return this.rawBrightness
+         },
+         set(newValue) {
+           this.$http.post(
+             "/brightness?bulb=" + this.addr + "&brightness=" + newValue
+           ).then(res => {
+             this.rawPower = true
+           })
          }
        }
      },
      mounted() {
        this.$http.get("/info?bulb=" + this.addr).then(res => {
          const info = res.body
-         this.brightness = parseInt(info.current_brightness)
-         this.temperature = parseInt(info.ct)
-         this.powerRaw = info.power
+         this.rawBrightness = parseInt(info.current_brightness)
+         this.rawTemperature = parseInt(info.ct)
+         this.rawPower = (info.power === "on")
        })
      }
    });
