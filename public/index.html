@@ -28,10 +28,10 @@
         <div>{{ name || addr }}</div>
         <div>
           <button class="button"
-                  :class="power ? 'is-primary' : ''"
+                  :class="power === true ? 'is-primary' : ''"
                   @click="turnOn">ON</button>
           <button class="button"
-                  :class="power ? '' : 'is-primary'"
+                  :class="power === false ? 'is-primary' : ''"
                   @click="turnOff">OFF</button>
         </div>
         <table>
@@ -102,7 +102,14 @@
      computed: {
        power: {
          get() {
-           return this.powerRaw == "on"
+           switch (this.powerRaw) {
+             case "on":
+               return true
+             case "off":
+               return false
+             default:
+               return undefined
+           }
          },
          set(newValue) {
            this.powerRaw = newValue ? "on" : "off"
