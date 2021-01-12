@@ -10,11 +10,12 @@
   <body>
     <div id="app">
       <div class="section">
-        <div class="columns">
+        <div class="columns is-multiline">
           <bulb v-for="bulb in config.bulbs"
                 :key="bulb.addr"
                 :addr="bulb.addr"
-                :name="bulb.name"></bulb>
+                :name="bulb.name"
+                class="column"></bulb>
         </div>
       </div>
     </div>
@@ -25,7 +26,7 @@
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
 
   <template id="bulb-template">
-    <div class="column">
+    <div class="bulb">
       <center>
         <div>{{ name || addr }}</div>
         <div>
