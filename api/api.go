@@ -97,10 +97,10 @@ func GetInfo() http.Handler {
 }
 
 func Handle() {
-	http.Handle("/", http.FileServer(http.Dir("./public")))
-	http.Handle("/on", TurnOnHandler())
-	http.Handle("/off", TurnOffHandler())
-	http.Handle("/brightness", Brightness())
-	http.Handle("/temperature", Temperature())
-	http.Handle("/info", GetInfo())
+	http.Handle("/", WithLogging(http.FileServer(http.Dir("./public"))))
+	http.Handle("/on", WithLogging(TurnOnHandler()))
+	http.Handle("/off", WithLogging(TurnOffHandler()))
+	http.Handle("/brightness", WithLogging(Brightness()))
+	http.Handle("/temperature", WithLogging(Temperature()))
+	http.Handle("/info", WithLogging(GetInfo()))
 }
