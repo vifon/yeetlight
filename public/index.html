@@ -12,6 +12,7 @@
       <div class="section">
         <div class="columns">
           <bulb v-for="bulb in config.bulbs"
+                :key="bulb.addr"
                 :addr="bulb.addr"
                 :name="bulb.name"></bulb>
         </div>
