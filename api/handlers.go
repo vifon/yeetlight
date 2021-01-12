@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func TurnOnHandler() http.Handler {
+func TurnOn() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -20,7 +20,7 @@ func TurnOnHandler() http.Handler {
 		}
 	})
 }
-func TurnOffHandler() http.Handler {
+func TurnOff() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -98,8 +98,8 @@ func GetInfo() http.Handler {
 
 func Handle() {
 	http.Handle("/", WithLogging(http.FileServer(http.Dir("./public"))))
-	http.Handle("/on", WithLogging(TurnOnHandler()))
-	http.Handle("/off", WithLogging(TurnOffHandler()))
+	http.Handle("/on", WithLogging(TurnOn()))
+	http.Handle("/off", WithLogging(TurnOff()))
 	http.Handle("/brightness", WithLogging(Brightness()))
 	http.Handle("/temperature", WithLogging(Temperature()))
 	http.Handle("/info", WithLogging(GetInfo()))
