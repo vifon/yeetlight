@@ -11,8 +11,9 @@
     <div id="app">
       <div class="section">
         <div class="columns">
-          <bulb addr="192.168.2.161"></bulb>
-          <bulb addr="192.168.2.162"></bulb>
+          <bulb v-for="bulb in config.bulbs"
+                :addr="bulb.addr"
+                :name="bulb.name"></bulb>
         </div>
       </div>
     </div>
@@ -129,7 +130,16 @@
    var app = new Vue({
      el: '#app',
      methods: {},
-     created() {},
+     data() {
+       return {
+         config: {}
+       }
+     },
+     created() {
+       this.$http.get("/config.json").then(res => {
+         this.config = res.body
+       })
+     },
    })
   </script>
 </html>
