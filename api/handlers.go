@@ -36,26 +36,11 @@ func TurnOff() http.Handler {
 	})
 }
 
-func Brightness() http.Handler {
+func SetProperty(property string, queryItem string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
-			cmd := bulb(r, "brightness", r.URL.Query().Get("brightness"))
-			if cmd == nil {
-				http.Error(w, "400 Bad Request", http.StatusBadRequest)
-				return
-			}
-			cmd.Start()
-		default:
-			http.Error(w, "405 Method Not Allowed", http.StatusNotFound)
-		}
-	})
-}
-func Temperature() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodPost:
-			cmd := bulb(r, "temperature", r.URL.Query().Get("temperature"))
+			cmd := bulb(r, property, r.URL.Query().Get(queryItem))
 			if cmd == nil {
 				http.Error(w, "400 Bad Request", http.StatusBadRequest)
 				return
@@ -100,7 +85,7 @@ func Handle() {
 	http.Handle("/", WithLogging(http.FileServer(http.Dir("./public"))))
 	http.Handle("/on", WithLogging(TurnOn()))
 	http.Handle("/off", WithLogging(TurnOff()))
-	http.Handle("/brightness", WithLogging(Brightness()))
-	http.Handle("/temperature", WithLogging(Temperature()))
+	http.Handle("/brightness", WithLogging(SetProperty("brightness", "brightness")))
+	http.Handle("/temperature", WithLogging(SetProperty("temperature", "temperature")))
 	http.Handle("/info", WithLogging(GetInfo()))
 }
