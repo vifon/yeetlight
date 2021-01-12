@@ -34,7 +34,7 @@
                   :class="power === false ? 'is-primary' : ''"
                   @click="turnOff">OFF</button>
         </div>
-        <table>
+        <table :class="{ disabled: !power }">
           <tr class="brightness">
             <td>Brightness</td>
             <td>
