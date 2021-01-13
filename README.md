@@ -21,9 +21,8 @@ Additional features:
 
 ## Dependencies
 
-A [Go](https://golang.org/) compiler is needed to build the
-application and [yeecli](https://pypi.org/project/yeecli/) is needed
-for the application to work.
+A [Go](https://golang.org/) compiler is needed to build
+the application.
 
 ## Usage
 
@@ -50,6 +49,6 @@ authentication is used at all.
 
 ## Roadmap
 
-- [ ] implement the Yeelight API communication in Go and eliminate the
+- [X] implement the Yeelight API communication in Go and eliminate the
       `yeecli` dependency
 - [ ] add support for device groups

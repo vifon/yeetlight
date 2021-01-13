@@ -111,11 +111,10 @@
            return this.rawTemperature
          },
          set(newValue) {
+           this.power = true
            this.$http.post(
              "/temperature?bulb=" + this.addr + "&temperature=" + newValue
-           ).then(res => {
-             this.rawPower = true
-           })
+           )
          }
        },
        brightness: {
@@ -123,18 +122,17 @@
            return this.rawBrightness
          },
          set(newValue) {
+           this.power = true
            this.$http.post(
              "/brightness?bulb=" + this.addr + "&brightness=" + newValue
-           ).then(res => {
-             this.rawPower = true
-           })
+           )
          }
        }
      },
      mounted() {
        this.$http.get("/info?bulb=" + this.addr).then(res => {
          const info = res.body
-         this.rawBrightness = parseInt(info.current_brightness)
+         this.rawBrightness = parseInt(info.bright)
          this.rawTemperature = parseInt(info.ct)
          this.rawPower = (info.power === "on")
        })

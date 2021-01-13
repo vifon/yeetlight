@@ -1,87 +1,49 @@
 package api
 
 import (
-	"encoding/json"
 	"net/http"
 )
 
 func PowerOn(power bool) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodPost:
-			var arg string
-			if power {
-				arg = "on"
-			} else {
-				arg = "off"
-			}
-			cmd := bulb(r, "turn", arg)
-			if cmd == nil {
-				http.Error(w, "400 Bad Request", http.StatusBadRequest)
-				return
-			}
-			cmd.Start()
-		default:
-			http.Error(w, "405 Method Not Allowed", http.StatusNotFound)
-		}
-	})
+	var state string
+	if power {
+		state = "on"
+	} else {
+		state = "off"
+	}
+	return CallMethod("set_power", ConstParam{state})
 }
 
-func SetProperty(property string, queryItem string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodPost:
-			arg := r.URL.Query().Get(queryItem)
-			if len(arg) == 0 {
-				http.Error(w, "400 Bad Request", http.StatusBadRequest)
-				return
-			}
-			cmd := bulb(r, property, arg)
-			if cmd == nil {
-				http.Error(w, "400 Bad Request", http.StatusBadRequest)
-				return
-			}
-			cmd.Start()
-		default:
-			http.Error(w, "405 Method Not Allowed", http.StatusNotFound)
-		}
-	})
+func SetBrightness() http.Handler {
+	return CallMethod(
+		"set_bright",
+		MapParam{
+			func (c interface{}) interface{} {
+				if c.(int) == 0 {
+					return 1
+				} else {
+					return c
+				}
+			},
+			NumParam{GetParam{"brightness"},},
+		},
+	)
 }
 
-func GetInfo() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			cmd := bulb(r, "status")
-			if cmd == nil {
-				http.Error(w, "400 Bad Request", http.StatusBadRequest)
-				return
-			}
-
-			output, err := cmd.Output()
-			if err != nil {
-				http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-
-			info := parseInfo(string(output))
-			infoJson, err := json.Marshal(info)
-			if err != nil {
-				http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-			w.Write(infoJson)
-		default:
-			http.Error(w, "405 Method Not Allowed", http.StatusNotFound)
-		}
-	})
+func SetTemperature() http.Handler {
+	return CallMethod(
+		"set_ct_abx",
+		NumParam{GetParam{"temperature"},},
+		ConstParam{"smooth"},
+		ConstParam{500},
+	)
 }
 
 func Handle() {
 	http.Handle("/", WithLogging(http.FileServer(http.Dir("./public"))))
 	http.Handle("/on", WithLogging(PowerOn(true)))
 	http.Handle("/off", WithLogging(PowerOn(false)))
-	http.Handle("/brightness", WithLogging(SetProperty("brightness", "brightness")))
-	http.Handle("/temperature", WithLogging(SetProperty("temperature", "temperature")))
+	http.Handle("/brightness", WithLogging(SetBrightness()))
+	http.Handle("/temperature", WithLogging(SetTemperature()))
 	http.Handle("/info", WithLogging(GetInfo()))
 }
