@@ -5,7 +5,7 @@ Yeetlight is a lightweight Yeelight smartlights web control panel.
 It was created as a way so that I wouldn't *yeet* my *lights* when
 interacting with their official smartphone app.
 
-**Features**
+## Features
 
 Remote control of the Yeelight/Xiaomi smartlights including:
 - power on/off
@@ -19,13 +19,13 @@ Additional features:
 
 ![](https://raw.githubusercontent.com/vifon/yeetlight/master/example/screenshot1.png)
 
-**Dependencies**
+## Dependencies
 
 A [Go](https://golang.org/) compiler is needed to build the
 application and [yeecli](https://pypi.org/project/yeecli/) is needed
 for the application to work.
 
-**Usage**
+## Usage
 
 Build and run with:
 
@@ -42,13 +42,13 @@ with the IP address and *may* contain an optional `name` field.
 
 Open `http://localhost:8080` in a web browser.
 
-**Security considerations**
+## Security considerations
 
 *Yeetlight* was written with the assumption it's being run inside
 a fully trusted network on a device like Raspberry Pi, so no
 authentication is used at all.
 
-**Roadmap**
+## Roadmap
 
 - [ ] implement the Yeelight API communication in Go and eliminate the
       `yeecli` dependency
