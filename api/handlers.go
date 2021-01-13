@@ -31,7 +31,12 @@ func SetProperty(property string, queryItem string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
-			cmd := bulb(r, property, r.URL.Query().Get(queryItem))
+			arg := r.URL.Query().Get(queryItem)
+			if len(arg) == 0 {
+				http.Error(w, "400 Bad Request", http.StatusBadRequest)
+				return
+			}
+			cmd := bulb(r, property, arg)
 			if cmd == nil {
 				http.Error(w, "400 Bad Request", http.StatusBadRequest)
 				return
