@@ -45,5 +45,5 @@ func Handle() {
 	http.Handle("/off", WithLogging(PowerOn(false)))
 	http.Handle("/brightness", WithLogging(SetBrightness()))
 	http.Handle("/temperature", WithLogging(SetTemperature()))
-	http.Handle("/info", WithLogging(GetInfo()))
+	http.Handle("/info", WithLogging(GetInfo("power", "bright", "ct")))
 }

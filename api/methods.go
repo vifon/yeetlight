@@ -50,9 +50,7 @@ func CallMethod(property string, params... Param) http.Handler {
 	})
 }
 
-func GetInfo() http.Handler {
-	requestedProps := []interface{}{"power", "bright", "ct"}
-
+func GetInfo(requestedProps... interface{}) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
