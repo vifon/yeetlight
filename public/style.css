@@ -20,3 +20,10 @@ input[type="range"]::-moz-range-track {
 .disabled {
   opacity: 30%;
 }
+
+.center {
+  text-align: center;
+}
+.center table {
+  display: inline-block;
+}
