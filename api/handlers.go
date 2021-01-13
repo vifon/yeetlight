@@ -5,26 +5,17 @@ import (
 	"net/http"
 )
 
-func TurnOn() http.Handler {
+func PowerOn(power bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
-			cmd := bulb(r, "turn", "on")
-			if cmd == nil {
-				http.Error(w, "400 Bad Request", http.StatusBadRequest)
-				return
+			var arg string
+			if power {
+				arg = "on"
+			} else {
+				arg = "off"
 			}
-			cmd.Start()
-		default:
-			http.Error(w, "405 Method Not Allowed", http.StatusNotFound)
-		}
-	})
-}
-func TurnOff() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodPost:
-			cmd := bulb(r, "turn", "off")
+			cmd := bulb(r, "turn", arg)
 			if cmd == nil {
 				http.Error(w, "400 Bad Request", http.StatusBadRequest)
 				return
@@ -83,8 +74,8 @@ func GetInfo() http.Handler {
 
 func Handle() {
 	http.Handle("/", WithLogging(http.FileServer(http.Dir("./public"))))
-	http.Handle("/on", WithLogging(TurnOn()))
-	http.Handle("/off", WithLogging(TurnOff()))
+	http.Handle("/on", WithLogging(PowerOn(true)))
+	http.Handle("/off", WithLogging(PowerOn(false)))
 	http.Handle("/brightness", WithLogging(SetProperty("brightness", "brightness")))
 	http.Handle("/temperature", WithLogging(SetProperty("temperature", "temperature")))
 	http.Handle("/info", WithLogging(GetInfo()))
