@@ -18,10 +18,10 @@ func (c ConstParam) Get(*http.Request) (interface{}, error) {
 	return c.Value, nil
 }
 
-type GetParam struct {
+type QueryParam struct {
 	param string
 }
-func (c GetParam) Get(r *http.Request) (interface{}, error) {
+func (c QueryParam) Get(r *http.Request) (interface{}, error) {
 	value := r.URL.Query().Get(c.param)
 	if len(value) == 0 {
 		return nil, errors.New(fmt.Sprintf("No param %v", c.param))
