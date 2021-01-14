@@ -11,7 +11,7 @@ func CallMethod(property string, params... Param) http.Handler {
 	return Post(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		addr := r.URL.Query().Get("bulb")
 		if len(addr) == 0 {
-			http.Error(w, "400 Bad Request", http.StatusBadRequest)
+			http.Error(w, "No bulb address", http.StatusBadRequest)
 			return
 		}
 
@@ -19,7 +19,7 @@ func CallMethod(property string, params... Param) http.Handler {
 		for i := range params {
 			value, err := params[i].Get(r)
 			if err != nil {
-				http.Error(w, "400 Bad Request", http.StatusBadRequest)
+				http.Error(w, "Missing parameter", http.StatusBadRequest)
 				return
 			}
 			methodParams[i] = value
@@ -29,12 +29,12 @@ func CallMethod(property string, params... Param) http.Handler {
 		cmd := bulb.NewCommand(1, property, methodParams...)
 		resp, err := b.Send(cmd)
 		if err != nil {
-			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+			http.Error(w, "Cannot send message", http.StatusInternalServerError)
 			return
 		}
 		parsed, err := resp.Decode()
 		if err != nil {
-			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+			http.Error(w, "Cannot decode response", http.StatusInternalServerError)
 			return
 		}
 
@@ -49,7 +49,7 @@ func GetInfo(requestedProps... interface{}) http.Handler {
 	return Get(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		addr := r.URL.Query().Get("bulb")
 		if len(addr) == 0 {
-			http.Error(w, "400 Bad Request", http.StatusBadRequest)
+			http.Error(w, "No bulb address", http.StatusBadRequest)
 			return
 		}
 
@@ -57,17 +57,17 @@ func GetInfo(requestedProps... interface{}) http.Handler {
 		cmd := bulb.NewCommand(1, "get_prop", requestedProps...)
 		resp, err := b.Send(cmd)
 		if err != nil {
-			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+			http.Error(w, "Cannot send message", http.StatusInternalServerError)
 			return
 		}
 		parsed, err := resp.Decode()
 		if err != nil {
-			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+			http.Error(w, "Cannot decode response", http.StatusInternalServerError)
 			return
 		}
 
 		if len(parsed.Result) != len(requestedProps) {
-			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+			http.Error(w, "Response invalid: bad array length", http.StatusInternalServerError)
 			return
 		}
 
@@ -77,7 +77,7 @@ func GetInfo(requestedProps... interface{}) http.Handler {
 		}
 		resultJson, err := json.Marshal(result)
 		if err != nil {
-			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
+			http.Error(w, "Cannot encode response", http.StatusInternalServerError)
 			return
 		}
 
