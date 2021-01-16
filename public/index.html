@@ -69,6 +69,22 @@
             <td>{{ temperature }}K</td>
           </tr>
         </table>
+        <div v-if="slaves.length > 0" class="slaves">
+          <span>Slaves:</span>
+          <ul>
+            <li v-for="slave in slaves">
+              <label>
+                <input type="checkbox"
+                       v-model="slave.enslaved"
+                       :key="slave.name"
+                       :name="slave.name"
+                       :value="slave.name"
+                />
+                <span>{{ slave.name }}</span>
+              </label>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </template>
@@ -86,6 +102,7 @@
        initialState.bulbs[name] = {
          name: name,
          addr: bulb.addr || name,
+         slaves: bulb.slaves || [],
          power: undefined,
          brightness: undefined,
          temperature: undefined
@@ -164,6 +181,8 @@
        template: "#bulb-template",
        data() {
          return {
+           slaves: [],
+
            /* Temporary local values for deferred application. */
            localBrightness: undefined,
            localTemperature: undefined
@@ -172,6 +191,13 @@
        methods: {
          setPower(newValue) {
            this.$store.dispatch('setPower', { bulb: this.name, power: newValue })
+           this.slaves.filter(
+             slave => slave.enslaved
+           ).forEach(slave => {
+             this.$store.dispatch(
+               'setPower', { bulb: slave.name, power: newValue }
+             )
+           })
          },
          setBrightness(newValue) {
            this.$store.dispatch(
@@ -179,12 +205,28 @@
            ).then(() => {
              this.localBrightness = undefined
            })
+
+           this.slaves.filter(
+             slave => slave.enslaved
+           ).forEach(slave => {
+             this.$store.dispatch(
+               'setBrightness', { bulb: slave.name, brightness: newValue }
+             )
+           })
          },
          setTemperature(newValue) {
            this.$store.dispatch(
              'setTemperature', { bulb: this.name, temperature: newValue }
            ).then(() => {
              this.localTemperature = undefined
+           })
+
+           this.slaves.filter(
+             slave => slave.enslaved
+           ).forEach(slave => {
+             this.$store.dispatch(
+               'setTemperature', { bulb: slave.name, temperature: newValue }
+             )
            })
          }
        },
@@ -232,6 +274,11 @@
              bulb: this.name,
              power: info.power === "on"
            })
+
+           this.slaves = this.$store.state.bulbs[this.name].slaves.map(slave => ({
+             name: slave,
+             enslaved: false
+           }))
          })
        }
      });
