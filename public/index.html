@@ -68,6 +68,48 @@
             </td>
             <td>{{ temperature }}K</td>
           </tr>
+        <tr class="red":class="{ disabled: !color }">
+          <td>Red</td>
+          <td>
+              <input type="range"
+                     min="0" 
+                     max="255" 
+                     step="5" 
+                     name="red" 
+                     value="red" 
+                     v-model="red"
+                     @change="setRGB(red,green,blue)" />
+          </td>
+          <td>{{ red }}</td>
+        </tr>
+        <tr class="green" :class="{ disabled: !color }">
+          <td>Green</td>
+          <td>
+            <input type="range" 
+                   min="0" 
+                   max="255" 
+                   step="5" 
+                   name="green" 
+                   value="green" 
+                   v-model="green"
+                   @change="setRGB(red,green,blue)" />
+          </td>
+          <td>{{ green }}</td>
+        </tr>
+        <tr class="blue" :class="{ disabled: !color }">
+          <td>Blue</td>
+          <td>
+            <input type="range" 
+                   min="0" 
+                   max="255" 
+                   step="5" 
+                   name="blue" 
+                   value="blue" 
+                   v-model="blue"
+                   @change="setRGB(red,green,blue)" />
+            </td>
+          <td>{{ blue }}</td>
+          </tr>
         </table>
       </div>
     </div>
@@ -88,7 +130,11 @@
          addr: bulb.addr || name,
          power: undefined,
          brightness: undefined,
-         temperature: undefined
+        temperature: undefined,
+        color:undefined,
+        red: undefined,
+        green: undefined,
+        blue: undefined
        }
      }
 
@@ -103,6 +149,13 @@
          },
          temperature(state, { bulb, temperature }) {
            state.bulbs[bulb].temperature = temperature
+        },
+        color(state, { bulb,color}) {
+          state.bulbs[bulb].color=color},
+        rgb(state, { bulb,red,green,blue }) {
+          state.bulbs[bulb].red = red
+          state.bulbs[bulb].green = green
+          state.bulbs[bulb].blue = blue
          }
        },
        actions: {
@@ -141,6 +194,18 @@
            ).then(() => {
              context.commit('temperature', { bulb, temperature })
            })
+        },
+        setRGB(context, { bulb, red, green, blue }) {
+          if (context.getters.power(bulb) !== true) {
+            context.dispatch('setPower', { bulb, power: true })
+         }
+          const addr = context.getters.addr(bulb)
+          var rgb = parseInt(red) * 65536 + parseInt(green) * 256 + parseInt(blue)
+          return axios.post(
+            "/rgb?bulb=" + addr + "&rgb=" + rgb
+          ).then(() => {
+            context.commit('rgb', { bulb, red,green,blue })
+          })
          }
        },
        getters: {
@@ -155,6 +220,18 @@
          },
          temperature: state => bulb => {
            return state.bulbs[bulb].temperature
+        },
+        color: state => bulb => {
+          return state.bulbs[bulb].color
+        },
+        red: state => bulb => {
+          return state.bulbs[bulb].red
+        },
+        green: state => bulb => {
+          return state.bulbs[bulb].green
+        }, 
+        blue: state => bulb => {
+          return state.bulbs[bulb].blue
          }
        }
      })
@@ -166,7 +243,10 @@
          return {
            /* Temporary local values for deferred application. */
            localBrightness: undefined,
-           localTemperature: undefined
+          localTemperature: undefined,
+          localRed:undefined,
+          localGreen:undefined,
+          localBlue:undefined
          }
        },
        methods: {
@@ -186,6 +266,13 @@
            ).then(() => {
              this.localTemperature = undefined
            })
+        },
+        setRGB(red, green, blue) {
+          this.$store.dispatch(
+            'setRGB', { bulb: this.name, red: red, green: green, blue: blue }
+          ).then(() => {
+            this.localRgb = undefined
+          })
          }
        },
        computed: {
@@ -215,8 +302,52 @@
            set(newValue) {
              this.localTemperature = newValue
            }
+        },
+        color: {
+          get() {
+              return this.$store.getters.color(this.name)
+          },
+          set(newValue) {
+            this.color = newValue
+          }
+        },
+        red: {
+          get() {
+            if (this.localRed === undefined) {
+              return this.$store.getters.red(this.name)
+            } else {
+              return this.localRed
          }
        },
+          set(newValue) {
+            this.localRed = newValue
+          }
+        },
+        green: {
+          get() {
+            if (this.localGreen === undefined) {
+              return this.$store.getters.green(this.name)
+            } else {
+              return this.localGreen
+            }
+          },
+          set(newValue) {
+            this.localGreen = newValue
+          }
+        },
+        blue: {
+          get() {
+            if (this.localBlue === undefined) {
+              return this.$store.getters.blue(this.name)
+            } else {
+              return this.localBlue
+            }
+          },
+          set(newValue) {
+            this.localBlue = newValue
+         }
+       },
+      },
        mounted() {
          axios.get("/info?bulb=" + this.addr).then(res => {
            const info = res.data
@@ -232,6 +363,16 @@
              bulb: this.name,
              power: info.power === "on"
            })
+          this.$store.commit('rgb', {
+            bulb: this.name,
+            red : info.rgb>>>16,
+            green : (info.rgb&65280)>>>8,
+            blue : info.rgb&255
+          })
+          this.$store.commit('color', {
+            bulb: this.name,
+            color : info.model ==="color"
+          })
          })
        }
      });
@@ -242,4 +383,5 @@
      })
    })
   </script>
+
 </html>

@@ -18,14 +18,14 @@ func SetBrightness() http.Handler {
 	return CallMethod(
 		"set_bright",
 		MapParam{
-			func (c interface{}) interface{} {
+			func(c interface{}) interface{} {
 				if c.(int) == 0 {
 					return 1
 				} else {
 					return c
 				}
 			},
-			NumParam{QueryParam{"brightness"},},
+			NumParam{QueryParam{"brightness"}},
 		},
 	)
 }
@@ -33,7 +33,16 @@ func SetBrightness() http.Handler {
 func SetTemperature() http.Handler {
 	return CallMethod(
 		"set_ct_abx",
-		NumParam{QueryParam{"temperature"},},
+		NumParam{QueryParam{"temperature"}},
+		ConstParam{"smooth"},
+		ConstParam{500},
+	)
+}
+
+func SetRGB() http.Handler {
+	return CallMethod(
+		"set_rgb",
+		NumParam{QueryParam{"rgb"}},
 		ConstParam{"smooth"},
 		ConstParam{500},
 	)
@@ -45,5 +54,6 @@ func Handle() {
 	http.Handle("/off", WithLogging(PowerOn(false)))
 	http.Handle("/brightness", WithLogging(SetBrightness()))
 	http.Handle("/temperature", WithLogging(SetTemperature()))
-	http.Handle("/info", WithLogging(GetInfo("power", "bright", "ct")))
+	http.Handle("/info", WithLogging(GetInfo("power", "bright", "ct", "rgb", "model")))
+	http.Handle("/rgb", WithLogging(SetRGB()))
 }
