@@ -11,9 +11,9 @@
     <div id="app">
       <div class="section">
         <div class="columns is-multiline">
-          <bulb v-for="bulb, name in bulbs"
+          <bulb v-for="bulb, name in $store.state.bulbs"
                 :key="name"
-                :addr="bulb.addr || name"
+                :addr="bulb.addr"
                 :name="name"
                 class="column"></bulb>
         </div>
@@ -22,6 +22,7 @@
   </body>
 
   <script src="js/vue.js"></script>
+  <script src="js/vuex.js"></script>
   <script src="js/axios.min.js"></script>
   <link rel="stylesheet" type="text/css" href="css/bulma.min.css">
 
@@ -32,10 +33,10 @@
         <div>
           <button class="button"
                   :class="power === true ? 'is-primary' : ''"
-                  @click="power = true">ON</button>
+                  @click="setPower(true)">ON</button>
           <button class="button"
                   :class="power === false ? 'is-primary' : ''"
-                  @click="power = false">OFF</button>
+                  @click="setPower(false)">OFF</button>
         </div>
         <table class="fading"
                :class="{ disabled: !power }">
@@ -47,8 +48,8 @@
                      step="5"
                      name="brightness"
                      value="brightness"
-                     v-model="rawBrightness"
-                     @change="brightness = rawBrightness"
+                     v-model="brightness"
+                     @change="setBrightness(brightness)"
               />
             </td>
             <td>{{ brightness }}%</td>
@@ -61,8 +62,8 @@
                      step="100"
                      name="temperature"
                      value="temperature"
-                     v-model="rawTemperature"
-                     @change="temperature = rawTemperature"
+                     v-model="temperature"
+                     @change="setTemperature(temperature)"
               />
             </td>
             <td>{{ temperature }}K</td>
@@ -77,83 +78,167 @@
 
    axios.get("/config.json").then(res => {
      const config = res.data
+     const initialState = {
+       bulbs: {}
+     }
+     for (name in config.bulbs) {
+       const bulb = config.bulbs[name]
+       initialState.bulbs[name] = {
+         name: name,
+         addr: bulb.addr || name,
+         power: undefined,
+         brightness: undefined,
+         temperature: undefined
+       }
+     }
+
+     const store = new Vuex.Store({
+       state: initialState,
+       mutations: {
+         power(state, { bulb, power }) {
+           state.bulbs[bulb].power = power
+         },
+         brightness(state, { bulb, brightness }) {
+           state.bulbs[bulb].brightness = brightness
+         },
+         temperature(state, { bulb, temperature }) {
+           state.bulbs[bulb].temperature = temperature
+         }
+       },
+       actions: {
+         setPower(context, { bulb, power }) {
+           switch (power) {
+             case true:
+             case false:
+               const addr = context.getters.addr(bulb)
+               return axios.post(
+                 "/" + (power ? "on" : "off") + "?bulb=" + addr
+               ).then(res => {
+                 context.commit('power', { bulb, power })
+               })
+             default:
+               return context.commit('power', { bulb, power: undefined })
+           }
+         },
+         setBrightness(context, { bulb, brightness }) {
+           if (context.getters.power(bulb) !== true) {
+             context.dispatch('setPower', { bulb, power: true })
+           }
+           const addr = context.getters.addr(bulb)
+           return axios.post(
+             "/brightness?bulb=" + addr + "&brightness=" + brightness
+           ).then(() => {
+             context.commit('brightness', { bulb, brightness })
+           })
+         },
+         setTemperature(context, { bulb, temperature }) {
+           if (context.getters.power(bulb) !== true) {
+             context.dispatch('setPower', { bulb, power: true })
+           }
+           const addr = context.getters.addr(bulb)
+           return axios.post(
+             "/temperature?bulb=" + addr + "&temperature=" + temperature
+           ).then(() => {
+             context.commit('temperature', { bulb, temperature })
+           })
+         }
+       },
+       getters: {
+         addr: state => bulb => {
+           return state.bulbs[bulb].addr
+         },
+         power: state => bulb => {
+           return state.bulbs[bulb].power
+         },
+         brightness: state => bulb => {
+           return state.bulbs[bulb].brightness
+         },
+         temperature: state => bulb => {
+           return state.bulbs[bulb].temperature
+         }
+       }
+     })
 
      Vue.component('bulb', {
        props: ['addr', 'name'],
        template: "#bulb-template",
        data() {
          return {
-           rawPower: undefined,
-           rawBrightness: undefined,
-           rawTemperature: undefined
+           /* Temporary local values for deferred application. */
+           localBrightness: undefined,
+           localTemperature: undefined
+         }
+       },
+       methods: {
+         setPower(newValue) {
+           this.$store.dispatch('setPower', { bulb: this.name, power: newValue })
+         },
+         setBrightness(newValue) {
+           this.$store.dispatch(
+             'setBrightness', { bulb: this.name, brightness: newValue }
+           ).then(() => {
+             this.localBrightness = undefined
+           })
+         },
+         setTemperature(newValue) {
+           this.$store.dispatch(
+             'setTemperature', { bulb: this.name, temperature: newValue }
+           ).then(() => {
+             this.localTemperature = undefined
+           })
          }
        },
        computed: {
-         power: {
+         power() {
+           return this.$store.getters.power(this.name)
+         },
+         brightness: {
            get() {
-             return this.rawPower
+             if (this.localBrightness === undefined) {
+               return this.$store.getters.brightness(this.name)
+             } else {
+               return this.localBrightness
+             }
            },
            set(newValue) {
-             switch (newValue) {
-               case true:
-               case false:
-                 axios.post(
-                   "/"
-                   + (newValue ? "on" : "off")
-                   + "?bulb=" + this.addr
-                 ).then(res => {
-                   this.rawPower = newValue
-                 })
-               default:
-                 this.rawPower = undefined
-             }
+             this.localBrightness = newValue
            }
          },
          temperature: {
            get() {
-             return this.rawTemperature
+             if (this.localTemperature === undefined) {
+               return this.$store.getters.temperature(this.name)
+             } else {
+               return this.localTemperature
+             }
            },
            set(newValue) {
-             if (this.power !== true) {
-               this.power = true
-             }
-             axios.post(
-               "/temperature?bulb=" + this.addr + "&temperature=" + newValue
-             )
-           }
-         },
-         brightness: {
-           get() {
-             return this.rawBrightness
-           },
-           set(newValue) {
-             if (this.power !== true) {
-               this.power = true
-             }
-             axios.post(
-               "/brightness?bulb=" + this.addr + "&brightness=" + newValue
-             )
+             this.localTemperature = newValue
            }
          }
        },
        mounted() {
          axios.get("/info?bulb=" + this.addr).then(res => {
            const info = res.data
-           this.rawBrightness = parseInt(info.bright)
-           this.rawTemperature = parseInt(info.ct)
-           this.rawPower = (info.power === "on")
+           this.$store.commit('brightness', {
+             bulb: this.name,
+             brightness: info.bright
+           })
+           this.$store.commit('temperature', {
+             bulb: this.name,
+             temperature: info.ct
+           })
+           this.$store.commit('power', {
+             bulb: this.name,
+             power: info.power === "on"
+           })
          })
        }
      });
 
      var app = new Vue({
        el: '#app',
-       methods: {},
-       data() {
-         return {
-           bulbs: config.bulbs
-         }
-       }
+       store: store
      })
    })
   </script>
