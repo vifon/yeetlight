@@ -36,18 +36,33 @@ intended value, i.e. exposing the control panel on all network
 interfaces on `8080` TCP port.
 
 Afterwards edit `public/config.json` according to the intended
-smartlight setup.  The `bulbs` config option should contain a mapping
-in one of these forms:
-
-    "Bulb name": {
-      "addr": "192.168.xxx.xxx"
-    }
-
-…or if no name is needed…
-
-    "192.168.xxx.xxx": {}
+smartlight setup.
 
 Open `http://localhost:8080` in a web browser.
+
+## Configuration
+
+`config.json` should contain a JSON object with a `bulbs` key contain
+a list of bulbs.  Each bulb has one of the following forms:
+
+- named bulb
+
+        "Bulb name": {
+          "addr": "192.168.xxx.xxx"
+        }
+
+- anonymous bulb (the address is also the name)
+
+        "192.168.xxx.xxx": {}
+
+Additionally if a bulb is a part of a larger setup, it may contain
+a `slaves` key with a list of *names* of other bulbs that will follow
+its state (controlled with a checkbox):
+
+    "192.168.xxx.xxx": {
+      "slaves": [ "Bulb name" ]
+    }
+
 
 ## Security considerations
 
@@ -59,4 +74,4 @@ authentication is used at all.
 
 - [X] implement the Yeelight API communication in Go and eliminate the
       `yeecli` dependency
-- [ ] add support for device groups
+- [X] add support for device groups
