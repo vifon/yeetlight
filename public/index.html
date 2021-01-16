@@ -75,90 +75,86 @@
   <script>
    'use strict';
 
-   Vue.component('bulb', {
-     props: ['addr', 'name'],
-     template: "#bulb-template",
-     data() {
-       return {
-         rawPower: undefined,
-         rawBrightness: undefined,
-         rawTemperature: undefined
-       }
-     },
-     computed: {
-       power: {
-         get() {
-           return this.rawPower
-         },
-         set(newValue) {
-           switch (newValue) {
-             case true:
-             case false:
-               axios.post(
-                 "/"
-                 + (newValue ? "on" : "off")
-                 + "?bulb=" + this.addr
-               ).then(res => {
-                 this.rawPower = newValue
-               })
-             default:
-               this.rawPower = undefined
-           }
-         }
-       },
-       temperature: {
-         get() {
-           return this.rawTemperature
-         },
-         set(newValue) {
-           if (this.power !== true) {
-             this.power = true
-           }
-           axios.post(
-             "/temperature?bulb=" + this.addr + "&temperature=" + newValue
-           )
-         }
-       },
-       brightness: {
-         get() {
-           return this.rawBrightness
-         },
-         set(newValue) {
-           if (this.power !== true) {
-             this.power = true
-           }
-           axios.post(
-             "/brightness?bulb=" + this.addr + "&brightness=" + newValue
-           )
-         }
-       }
-     },
-     mounted() {
-       axios.get("/info?bulb=" + this.addr).then(res => {
-         const info = res.data
-         this.rawBrightness = parseInt(info.bright)
-         this.rawTemperature = parseInt(info.ct)
-         this.rawPower = (info.power === "on")
-       })
-     }
-   });
+   axios.get("/config.json").then(res => {
+     const config = res.data
 
-   var app = new Vue({
-     el: '#app',
-     methods: {},
-     data() {
-       return {
-         config: {},
-         bulbs: {}
+     Vue.component('bulb', {
+       props: ['addr', 'name'],
+       template: "#bulb-template",
+       data() {
+         return {
+           rawPower: undefined,
+           rawBrightness: undefined,
+           rawTemperature: undefined
+         }
+       },
+       computed: {
+         power: {
+           get() {
+             return this.rawPower
+           },
+           set(newValue) {
+             switch (newValue) {
+               case true:
+               case false:
+                 axios.post(
+                   "/"
+                   + (newValue ? "on" : "off")
+                   + "?bulb=" + this.addr
+                 ).then(res => {
+                   this.rawPower = newValue
+                 })
+               default:
+                 this.rawPower = undefined
+             }
+           }
+         },
+         temperature: {
+           get() {
+             return this.rawTemperature
+           },
+           set(newValue) {
+             if (this.power !== true) {
+               this.power = true
+             }
+             axios.post(
+               "/temperature?bulb=" + this.addr + "&temperature=" + newValue
+             )
+           }
+         },
+         brightness: {
+           get() {
+             return this.rawBrightness
+           },
+           set(newValue) {
+             if (this.power !== true) {
+               this.power = true
+             }
+             axios.post(
+               "/brightness?bulb=" + this.addr + "&brightness=" + newValue
+             )
+           }
+         }
+       },
+       mounted() {
+         axios.get("/info?bulb=" + this.addr).then(res => {
+           const info = res.data
+           this.rawBrightness = parseInt(info.bright)
+           this.rawTemperature = parseInt(info.ct)
+           this.rawPower = (info.power === "on")
+         })
        }
-     },
-     created() {
-       axios.get("/config.json").then(res => {
-         const config = res.data
-         this.config = config
-         this.bulbs = config.bulbs
-       })
-     },
+     });
+
+     var app = new Vue({
+       el: '#app',
+       methods: {},
+       data() {
+         return {
+           bulbs: config.bulbs
+         }
+       }
+     })
    })
   </script>
 </html>
