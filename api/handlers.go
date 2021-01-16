@@ -18,14 +18,14 @@ func SetBrightness() http.Handler {
 	return CallMethod(
 		"set_bright",
 		MapParam{
-			func (c interface{}) interface{} {
+			func(c interface{}) interface{} {
 				if c.(int) == 0 {
 					return 1
 				} else {
 					return c
 				}
 			},
-			NumParam{QueryParam{"brightness"},},
+			NumParam{QueryParam{"brightness"}},
 		},
 	)
 }
