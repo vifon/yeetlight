@@ -22,7 +22,7 @@
   </body>
 
   <script src="js/vue.js"></script>
-  <script src="js/vue-resource.js"></script>
+  <script src="js/axios.min.js"></script>
   <link rel="stylesheet" type="text/css" href="css/bulma.min.css">
 
   <template id="bulb-template">
@@ -94,7 +94,7 @@
            switch (newValue) {
              case true:
              case false:
-               this.$http.post(
+               axios.post(
                  "/"
                  + (newValue ? "on" : "off")
                  + "?bulb=" + this.addr
@@ -114,7 +114,7 @@
            if (this.power !== true) {
              this.power = true
            }
-           this.$http.post(
+           axios.post(
              "/temperature?bulb=" + this.addr + "&temperature=" + newValue
            )
          }
@@ -127,15 +127,15 @@
            if (this.power !== true) {
              this.power = true
            }
-           this.$http.post(
+           axios.post(
              "/brightness?bulb=" + this.addr + "&brightness=" + newValue
            )
          }
        }
      },
      mounted() {
-       this.$http.get("/info?bulb=" + this.addr).then(res => {
-         const info = res.body
+       axios.get("/info?bulb=" + this.addr).then(res => {
+         const info = res.data
          this.rawBrightness = parseInt(info.bright)
          this.rawTemperature = parseInt(info.ct)
          this.rawPower = (info.power === "on")
@@ -153,8 +153,8 @@
        }
      },
      created() {
-       this.$http.get("/config.json").then(res => {
-         const config = res.body
+       axios.get("/config.json").then(res => {
+         const config = res.data
          this.config = config
          this.bulbs = config.bulbs
        })
