@@ -56,11 +56,11 @@ a list of bulbs.  Each bulb has one of the following forms:
         "192.168.xxx.xxx": {}
 
 Additionally if a bulb is a part of a larger setup, it may contain
-a `slaves` key with a list of *names* of other bulbs that will follow
+a `linked` key with a list of *names* of other bulbs that will follow
 its state (controlled with a checkbox):
 
     "192.168.xxx.xxx": {
-      "slaves": [ "Bulb name" ]
+      "linked": [ "Bulb name" ]
     }
 
 

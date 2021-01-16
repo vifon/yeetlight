@@ -69,18 +69,18 @@
             <td>{{ temperature }}K</td>
           </tr>
         </table>
-        <div v-if="slaves.length > 0" class="slaves">
-          <span>Slaves:</span>
+        <div v-if="linked.length > 0" class="linked">
+          <span>Linked:</span>
           <ul>
-            <li v-for="slave in slaves">
+            <li v-for="link in linked">
               <label>
                 <input type="checkbox"
-                       v-model="slave.enslaved"
-                       :key="slave.name"
-                       :name="slave.name"
-                       :value="slave.name"
+                       v-model="link.enable"
+                       :key="link.name"
+                       :name="link.name"
+                       :value="link.name"
                 />
-                <span>{{ slave.name }}</span>
+                <span>{{ link.name }}</span>
               </label>
             </li>
           </ul>
@@ -102,7 +102,7 @@
        initialState.bulbs[name] = {
          name: name,
          addr: bulb.addr || name,
-         slaves: bulb.slaves || [],
+         linked: bulb.linked || [],
          power: undefined,
          brightness: undefined,
          temperature: undefined
@@ -181,7 +181,7 @@
        template: "#bulb-template",
        data() {
          return {
-           slaves: [],
+           linked: [],
 
            /* Temporary local values for deferred application. */
            localBrightness: undefined,
@@ -191,11 +191,11 @@
        methods: {
          setPower(newValue) {
            this.$store.dispatch('setPower', { bulb: this.name, power: newValue })
-           this.slaves.filter(
-             slave => slave.enslaved
-           ).forEach(slave => {
+           this.linked.filter(
+             link => link.enable
+           ).forEach(link => {
              this.$store.dispatch(
-               'setPower', { bulb: slave.name, power: newValue }
+               'setPower', { bulb: link.name, power: newValue }
              )
            })
          },
@@ -206,11 +206,11 @@
              this.localBrightness = undefined
            })
 
-           this.slaves.filter(
-             slave => slave.enslaved
-           ).forEach(slave => {
+           this.linked.filter(
+             link => link.enable
+           ).forEach(link => {
              this.$store.dispatch(
-               'setBrightness', { bulb: slave.name, brightness: newValue }
+               'setBrightness', { bulb: link.name, brightness: newValue }
              )
            })
          },
@@ -221,11 +221,11 @@
              this.localTemperature = undefined
            })
 
-           this.slaves.filter(
-             slave => slave.enslaved
-           ).forEach(slave => {
+           this.linked.filter(
+             link => link.enable
+           ).forEach(link => {
              this.$store.dispatch(
-               'setTemperature', { bulb: slave.name, temperature: newValue }
+               'setTemperature', { bulb: link.name, temperature: newValue }
              )
            })
          }
@@ -275,9 +275,9 @@
              power: info.power === "on"
            })
 
-           this.slaves = this.$store.state.bulbs[this.name].slaves.map(slave => ({
-             name: slave,
-             enslaved: false
+           this.linked = this.$store.state.bulbs[this.name].linked.map(link => ({
+             name: link,
+             enable: false
            }))
          })
        }
