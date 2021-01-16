@@ -36,8 +36,16 @@ intended value, i.e. exposing the control panel on all network
 interfaces on `8080` TCP port.
 
 Afterwards edit `public/config.json` according to the intended
-smartlight setup.  The `bulbs` elements *must* contain an `addr` field
-with the IP address and *may* contain an optional `name` field.
+smartlight setup.  The `bulbs` config option should contain a mapping
+in one of these forms:
+
+    "Bulb name": {
+      "addr": "192.168.xxx.xxx"
+    }
+
+…or if no name is needed…
+
+    "192.168.xxx.xxx": {}
 
 Open `http://localhost:8080` in a web browser.
 

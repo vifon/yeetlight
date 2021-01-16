@@ -11,10 +11,10 @@
     <div id="app">
       <div class="section">
         <div class="columns is-multiline">
-          <bulb v-for="bulb in config.bulbs"
-                :key="bulb.addr"
-                :addr="bulb.addr"
-                :name="bulb.name"
+          <bulb v-for="bulb, name in bulbs"
+                :key="name"
+                :addr="bulb.addr || name"
+                :name="name"
                 class="column"></bulb>
         </div>
       </div>
@@ -28,7 +28,7 @@
   <template id="bulb-template">
     <div class="bulb">
       <div class="center">
-        <div>{{ name || addr }}</div>
+        <div>{{ name }}</div>
         <div>
           <button class="button"
                   :class="power === true ? 'is-primary' : ''"
@@ -148,12 +148,15 @@
      methods: {},
      data() {
        return {
-         config: {}
+         config: {},
+         bulbs: {}
        }
      },
      created() {
        this.$http.get("/config.json").then(res => {
-         this.config = res.body
+         const config = res.body
+         this.config = config
+         this.bulbs = config.bulbs
        })
      },
    })
