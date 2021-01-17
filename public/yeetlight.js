@@ -189,7 +189,7 @@ axios.get("/config.json").then(res => {
         }))
       })
     }
-  });
+  })
 
   var app = new Vue({
     el: '#app',
