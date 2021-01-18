@@ -11,7 +11,12 @@ func PowerOn(power bool) http.Handler {
 	} else {
 		state = "off"
 	}
-	return CallMethod("set_power", ConstParam{state})
+	return CallMethod(
+		"set_power",
+		ConstParam{state},
+		ConstParam{"smooth"},
+		ConstParam{500},
+	)
 }
 
 func SetBrightness() http.Handler {
@@ -27,6 +32,8 @@ func SetBrightness() http.Handler {
 			},
 			NumParam{QueryParam{"brightness"}},
 		},
+		ConstParam{"smooth"},
+		ConstParam{500},
 	)
 }
 
