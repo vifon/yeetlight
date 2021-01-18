@@ -31,13 +31,21 @@ func (p QueryParam) Get(r *http.Request) (interface{}, error) {
 
 type NumParam struct {
 	Param
+	Base int
+	BitSize int
+}
+func NewNumParam(p Param) NumParam {
+	return NumParam{p, 0, 0}
+}
+func NewNumParamWithBase(p Param, base int) NumParam {
+	return NumParam{p, base, 0}
 }
 func (p NumParam) Get(r *http.Request) (value interface{}, err error) {
 	origValue, err := p.Param.Get(r)
 	if err != nil {
 		return
 	}
-	value, err = strconv.Atoi(origValue.(string))
+	value, err = strconv.ParseInt(origValue.(string), p.Base, p.BitSize)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Not a number: %v", origValue))
 	}

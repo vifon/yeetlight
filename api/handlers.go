@@ -30,7 +30,7 @@ func SetBrightness() http.Handler {
 					return c
 				}
 			},
-			NumParam{QueryParam{"brightness"}},
+			NewNumParam(QueryParam{"brightness"}),
 		},
 		ConstParam{"smooth"},
 		ConstParam{500},
@@ -40,7 +40,7 @@ func SetBrightness() http.Handler {
 func SetTemperature() http.Handler {
 	return CallMethod(
 		"set_ct_abx",
-		NumParam{QueryParam{"temperature"},},
+		NewNumParam(QueryParam{"temperature"}),
 		ConstParam{"smooth"},
 		ConstParam{500},
 	)
