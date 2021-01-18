@@ -19,7 +19,7 @@ func CallMethod(property string, params... Param) http.Handler {
 		for i := range params {
 			value, err := params[i].Get(r)
 			if err != nil {
-				http.Error(w, "Missing parameter", http.StatusBadRequest)
+				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 			methodParams[i] = value
