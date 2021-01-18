@@ -33,13 +33,13 @@ type NumParam struct {
 	Param
 }
 func (p NumParam) Get(r *http.Request) (value interface{}, err error) {
-	value, err = p.Param.Get(r)
+	origValue, err := p.Param.Get(r)
 	if err != nil {
 		return
 	}
-	value, err = strconv.Atoi(value.(string))
+	value, err = strconv.Atoi(origValue.(string))
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Not a number: %v", value))
+		return nil, errors.New(fmt.Sprintf("Not a number: %v", origValue))
 	}
 	return
 }
