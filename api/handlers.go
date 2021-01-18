@@ -46,11 +46,23 @@ func SetTemperature() http.Handler {
 	)
 }
 
+func SetColor() http.Handler {
+	return CallMethod(
+		"set_rgb",
+		NewNumParamWithBase(QueryParam{"rgb"}, 16),
+		ConstParam{"smooth"},
+		ConstParam{500},
+	)
+}
+
 func Handle() {
 	http.Handle("/", WithLogging(http.FileServer(http.Dir("./public"))))
 	http.Handle("/on", WithLogging(PowerOn(true)))
 	http.Handle("/off", WithLogging(PowerOn(false)))
 	http.Handle("/brightness", WithLogging(SetBrightness()))
 	http.Handle("/temperature", WithLogging(SetTemperature()))
-	http.Handle("/info", WithLogging(GetInfo("power", "bright", "ct")))
+	http.Handle("/color", WithLogging(SetColor()))
+	http.Handle("/info", WithLogging(GetInfo(
+		"power", "bright", "ct", "rgb", "color_mode",
+	)))
 }
