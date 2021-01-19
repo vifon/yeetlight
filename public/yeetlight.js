@@ -10,10 +10,12 @@ axios.get("/config.json").then(res => {
     initialState.bulbs[name] = {
       name: name,
       addr: bulb.addr || name,
+      isRGB: bulb.rgb || false,
       linked: bulb.linked || [],
       power: undefined,
       brightness: undefined,
-      temperature: undefined
+      temperature: undefined,
+      color: undefined
     }
   }
 
@@ -28,6 +30,9 @@ axios.get("/config.json").then(res => {
       },
       temperature(state, { bulb, temperature }) {
         state.bulbs[bulb].temperature = temperature
+      },
+      color(state, { bulb, color }) {
+        state.bulbs[bulb].color = color
       }
     },
     actions: {
@@ -66,6 +71,17 @@ axios.get("/config.json").then(res => {
         ).then(() => {
           context.commit('temperature', { bulb, temperature })
         })
+      },
+      setColor(context, { bulb, color }) {
+        if (context.getters.power(bulb) !== true) {
+          context.dispatch('setPower', { bulb, power: true })
+        }
+        const addr = context.getters.addr(bulb)
+        return axios.post(
+          "/color?bulb=" + addr + "&rgb=" + color.substr(1)
+        ).then(() => {
+          context.commit('color', { bulb, color })
+        })
       }
     },
     getters: {
@@ -80,6 +96,12 @@ axios.get("/config.json").then(res => {
       },
       temperature: state => bulb => {
         return state.bulbs[bulb].temperature
+      },
+      color: state => bulb => {
+        return state.bulbs[bulb].color
+      },
+      isRGB: state => bulb => {
+        return state.bulbs[bulb].isRGB
       }
     }
   })
@@ -93,7 +115,8 @@ axios.get("/config.json").then(res => {
 
         /* Temporary local values for deferred application. */
         localBrightness: undefined,
-        localTemperature: undefined
+        localTemperature: undefined,
+        localColor: undefined
       }
     },
     methods: {
@@ -136,6 +159,21 @@ axios.get("/config.json").then(res => {
             'setTemperature', { bulb: link.name, temperature: newValue }
           )
         })
+      },
+      setColor(newValue) {
+        this.$store.dispatch(
+          'setColor', { bulb: this.name, color: newValue }
+        ).then(() => {
+          this.localColor = undefined
+        })
+
+        this.linked.filter(
+          link => link.enable
+        ).forEach(link => {
+          this.$store.dispatch(
+            'setColor', { bulb: link.name, color: newValue }
+          )
+        })
       }
     },
     computed: {
@@ -165,6 +203,21 @@ axios.get("/config.json").then(res => {
         set(newValue) {
           this.localTemperature = newValue
         }
+      },
+      color: {
+        get() {
+          if (this.localColor === undefined) {
+            return this.$store.getters.color(this.name)
+          } else {
+            return this.localColor
+          }
+        },
+        set(newValue) {
+          this.localColor = newValue
+        }
+      },
+      isRGB() {
+        return this.$store.getters.isRGB(this.name)
       }
     },
     mounted() {
@@ -181,6 +234,18 @@ axios.get("/config.json").then(res => {
         this.$store.commit('power', {
           bulb: this.name,
           power: info.power === "on"
+        })
+
+        let toRGBString = base10 => {
+          let rgb = parseInt(base10, 10).toString(16)
+          while (rgb.length < 6) {
+            rgb = "0" + rgb
+          }
+          return "#" + rgb
+        }
+        this.$store.commit('color', {
+          bulb: this.name,
+          color: toRGBString(info.rgb)
         })
 
         this.linked = this.$store.state.bulbs[this.name].linked.map(link => ({

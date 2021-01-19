@@ -55,14 +55,16 @@ a list of bulbs.  Each bulb has one of the following forms:
 
         "192.168.xxx.xxx": {}
 
-Additionally if a bulb is a part of a larger setup, it may contain
-a `linked` key with a list of *names* of other bulbs that will follow
-its state (controlled with a checkbox):
+If a bulb is a part of a larger setup, it may contain a `linked` key
+with a list of *names* of other bulbs that will follow its state
+(controlled with a checkbox):
 
     "192.168.xxx.xxx": {
       "linked": [ "Bulb name" ]
     }
 
+To enable the RGB capabilities, add `"rgb": true` to the
+bulb's config.
 
 ## Security considerations
 

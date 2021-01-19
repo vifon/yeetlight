@@ -68,6 +68,18 @@
             </td>
             <td>{{ temperature }}K</td>
           </tr>
+          <tr v-if="isRGB">
+            <td></td>
+            <td>
+              <input type="color"
+                     name="color"
+                     value="ffffff"
+                     v-model="color"
+                     @change="setColor(color)"
+              />
+            </td>
+            <td></td>
+          </tr>
         </table>
         <div v-if="linked.length > 0" class="linked">
           <span>Linked:</span>
