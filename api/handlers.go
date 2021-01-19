@@ -24,7 +24,7 @@ func SetBrightness() http.Handler {
 		"set_bright",
 		MapParam{
 			func(c interface{}) interface{} {
-				if c.(int) == 0 {
+				if c.(int64) == 0 {
 					return 1
 				} else {
 					return c
