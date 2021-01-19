@@ -11,10 +11,14 @@ Remote control of the Yeelight/Xiaomi smartlights including:
 - power on/off
 - brightness
 - color temperature
+- RGB support (albeit ugly)
+- multiple lights linked to each other and acting as a larger setup
 
 Additional features:
 - simple UI
-- support for multiple smartlights in a single panel
+- self-contained
+- full controls of multiple smartlights in a single panel; no
+  subpanels per light as in the official app
 - responsive web design
 
 ![](https://raw.githubusercontent.com/vifon/yeetlight/master/example/screenshot1.png)
@@ -70,10 +74,7 @@ bulb's config.
 
 *Yeetlight* was written with the assumption it's being run inside
 a fully trusted network on a device like Raspberry Pi, so no
-authentication is used at all.
-
-## Roadmap
-
-- [X] implement the Yeelight API communication in Go and eliminate the
-      `yeecli` dependency
-- [X] add support for device groups
+authentication is used at all.  The bulbs themselves are not protected
+either so as long as *Yeetlight* is accessible only from the same
+network the bulbs are, it shouldn't create any additional
+security risks.
