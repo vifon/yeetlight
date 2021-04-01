@@ -248,10 +248,19 @@ axios.get("/config.json").then(res => {
           color: toRGBString(info.rgb)
         })
 
-        this.linked = this.$store.state.bulbs[this.name].linked.map(link => ({
-          name: link,
-          enable: false
-        }))
+        this.linked = this.$store.state.bulbs[this.name].linked.map(link => {
+          if (typeof link === 'string') {
+            return {
+              name: link,
+              enable: false
+            }
+          } else {
+            return {
+              name: link.name,
+              enable: link.enable
+            }
+          }
+        })
       })
     }
   })

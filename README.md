@@ -67,6 +67,17 @@ with a list of *names* of other bulbs that will follow its state
       "linked": [ "Bulb name" ]
     }
 
+…or more verbosely (and with the checkbox pre-checked):
+
+    "192.168.xxx.xxx": {
+      "linked": [
+        {
+          "name": "Bulb name",
+          "enable": true
+        }
+      ]
+    }
+
 To enable the RGB capabilities, add `"rgb": true` to the
 bulb's config.
 
