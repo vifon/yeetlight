@@ -2,7 +2,6 @@ package api
 
 import (
 	"io/fs"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -59,12 +58,10 @@ func SetColor() http.Handler {
 
 func Config(config string) http.Handler {
 	return Get(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		f, err := ioutil.ReadFile(config)
-		if err != nil {
-			http.Error(w, "Cannot open the config file", http.StatusInternalServerError)
-			return
-		}
-		w.Write(f)
+		// "config" is provided by the server operator, not read from
+		// the request URL, so it should be safe to just feed it to
+		// http.ServeFile.
+		http.ServeFile(w, r, config)
 	}))
 }
 
