@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"einval.eu/yeetlight/bulb"
+	"github.com/vifon/yeetlight/bulb"
 )
 
 func CallMethod(property string, params... Param) http.Handler {

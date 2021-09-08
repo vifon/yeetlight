@@ -1,3 +1,3 @@
-module einval.eu/yeetlight
+module github.com/vifon/yeetlight
 
 go 1.16

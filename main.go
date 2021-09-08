@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os/exec"
 
-	"einval.eu/yeetlight/api"
+	"github.com/vifon/yeetlight/api"
 )
 
 //go:embed public/*
