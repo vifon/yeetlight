@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os/exec"
 
 	"einval.eu/yeetlight/api"
 )
@@ -14,11 +15,14 @@ import (
 //go:embed public/*
 var content embed.FS
 
+func Browse(iface string) {
+	exec.Command("xdg-open", "http://" + iface).Run()
+}
+
 func main() {
-	iface := "0.0.0.0:8080"
-	config := ""
-	flag.StringVar(&iface, "iface", iface, "Network interface to bind to.")
-	flag.StringVar(&config, "config", config, "Path to the config.")
+	browse := flag.Bool("browse", false, "Launch a browser.")
+	iface := flag.String("iface", "0.0.0.0:8080", "Network interface to bind to.")
+	config := flag.String("config", "", "Path to the config.")
 	flag.Parse()
 
 	static, err := fs.Sub(content, "public")
@@ -28,8 +32,11 @@ func main() {
 		)
 	}
 
-	api.Handle(static, config)
+	api.Handle(static, *config)
 
-	fmt.Printf("Serving at http://%v\n", iface)
-	log.Fatal(http.ListenAndServe(iface, nil))
+	fmt.Printf("Serving at http://%v\n", *iface)
+	if browse != nil && *browse == true {
+		go Browse(*iface)
+	}
+	log.Fatal(http.ListenAndServe(*iface, nil))
 }
