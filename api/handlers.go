@@ -1,6 +1,8 @@
 package api
 
 import (
+	"io/fs"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -55,8 +57,23 @@ func SetColor() http.Handler {
 	)
 }
 
-func Handle() {
-	http.Handle("/", WithLogging(http.FileServer(http.Dir("./public"))))
+func Config(config string) http.Handler {
+	return Get(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		f, err := ioutil.ReadFile(config)
+		if err != nil {
+			http.Error(w, "Cannot open the config file", http.StatusInternalServerError)
+			return
+		}
+		w.Write(f)
+	}))
+}
+
+func Handle(static fs.FS, config string) {
+	http.Handle("/", WithLogging(http.FileServer(http.FS(static))))
+	if len(config) > 0 {
+		http.Handle("/config.json", WithLogging(Config(config)))
+	}
+
 	http.Handle("/on", WithLogging(PowerOn(true)))
 	http.Handle("/off", WithLogging(PowerOn(false)))
 	http.Handle("/brightness", WithLogging(SetBrightness()))
