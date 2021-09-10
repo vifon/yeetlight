@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// PowerOn turns the bulb on and off.
 func PowerOn(power bool) http.Handler {
 	var state string
 	if power {
@@ -20,6 +21,7 @@ func PowerOn(power bool) http.Handler {
 	)
 }
 
+// SetBrightness sets the brightness of a bulb.
 func SetBrightness() http.Handler {
 	return CallMethod(
 		"set_bright",
@@ -38,6 +40,7 @@ func SetBrightness() http.Handler {
 	)
 }
 
+// SetTemperature sets the color temperature of a bulb.
 func SetTemperature() http.Handler {
 	return CallMethod(
 		"set_ct_abx",
@@ -47,6 +50,7 @@ func SetTemperature() http.Handler {
 	)
 }
 
+// SetColor sets the color of a bulb.
 func SetColor() http.Handler {
 	return CallMethod(
 		"set_rgb",
@@ -56,6 +60,7 @@ func SetColor() http.Handler {
 	)
 }
 
+// Config serves the config file.
 func Config(config string) http.Handler {
 	return Get(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// "config" is provided by the server operator, not read from
@@ -65,6 +70,7 @@ func Config(config string) http.Handler {
 	}))
 }
 
+// Handle sets up all the HTTP handlers.
 func Handle(static fs.FS, config string) {
 	http.Handle("/", WithLogging(http.FileServer(http.FS(static))))
 	if len(config) > 0 {

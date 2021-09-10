@@ -7,6 +7,11 @@ import (
 	"github.com/vifon/yeetlight/bulb"
 )
 
+// CallMethod handles the requests that sets a given smart light
+// property according to the given parameters.  It's the caller's job
+// to make sure they conform to the Yeelight API.
+//
+// The bulb address is specified in the "bulb" query parameter.
 func CallMethod(property string, params... Param) http.Handler {
 	return Post(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		addr := r.URL.Query().Get("bulb")
@@ -45,6 +50,9 @@ func CallMethod(property string, params... Param) http.Handler {
 	}))
 }
 
+// GetInfo serves the info about the requested properties of a bulb.
+//
+// The bulb address is specified in the "bulb" query parameter.
 func GetInfo(requestedProps... interface{}) http.Handler {
 	return Get(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		addr := r.URL.Query().Get("bulb")

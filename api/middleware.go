@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// WithLogging logs the info about each handled request (but not response).
 func WithLogging(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%v: %v %v", r.RemoteAddr, r.Method, r.URL.String())
@@ -12,6 +13,8 @@ func WithLogging(h http.Handler) http.Handler {
 	})
 }
 
+// HttpMethod checks for the HTTP method of each handled request,
+// rejecting all the other HTTP methods.
 func HttpMethod(method string, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -24,10 +27,12 @@ func HttpMethod(method string, h http.Handler) http.Handler {
 	})
 }
 
+// Get allows only HTTP GET requests.
 func Get(h http.Handler) http.Handler {
 	return HttpMethod(http.MethodGet, h)
 }
 
+// Post allows only HTTP POST requests.
 func Post(h http.Handler) http.Handler {
 	return HttpMethod(http.MethodPost, h)
 }

@@ -15,6 +15,8 @@ import (
 //go:embed public/*
 var content embed.FS
 
+// Browse launches a web browser (as defined by xdg-open) with the
+// launched service open.
 func Browse(iface string) {
 	exec.Command("xdg-open", "http://" + iface).Run()
 }
