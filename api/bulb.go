@@ -92,3 +92,32 @@ func GetInfo(requestedProps... interface{}) http.Handler {
 		w.Write(resultJson)
 	}))
 }
+
+// Toggle turns the bulb on and off
+//
+// The bulb address is specified in the "bulb" query parameter.
+func Toggle() http.Handler {
+	return Post(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		addr := r.URL.Query().Get("bulb")
+		if len(addr) == 0 {
+			http.Error(w, "No bulb address", http.StatusBadRequest)
+			return
+		}
+
+		b := bulb.Bulb{Addr: addr}
+		cmd := bulb.NewCommand(1, "get_prop", "power")
+		resp, err := b.Send(cmd)
+		if err != nil {
+			http.Error(w, "Cannot send message", http.StatusInternalServerError)
+			return
+		}
+		parsed, err := resp.Decode()
+		if err != nil {
+			http.Error(w, "Cannot decode response", http.StatusInternalServerError)
+			return
+		}
+
+		state := parsed.Result[0] == "on"
+		PowerOn(!state).ServeHTTP(w, r)
+	}))
+}

@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-// PowerOn turns the bulb on and off.
+// PowerOn turns the bulb on or off.
 func PowerOn(power bool) http.Handler {
 	var state string
 	if power {
@@ -85,4 +85,5 @@ func Handle(static fs.FS, config string) {
 	http.Handle("/info", WithLogging(GetInfo(
 		"power", "bright", "ct", "rgb", "color_mode",
 	)))
+	http.Handle("/toggle", WithLogging(Toggle()))
 }
