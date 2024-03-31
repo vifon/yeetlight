@@ -12,6 +12,16 @@ struct Command {
     params: Value,
 }
 
+impl Command {
+    fn new(method: &str, params: Value) -> Command {
+        Command {
+            id: 1,
+            method: method.to_owned(),
+            params,
+        }
+    }
+}
+
 struct Bulb {
     addr: String,
 }
@@ -27,7 +37,7 @@ impl Bulb {
         TcpStream::connect(&self.addr)
     }
 
-    fn call(self: &Self, command: &Command) -> io::Result<()> {
+    fn call(self: &Self, command: &Command) -> io::Result<Value> {
         let mut stream = self.connect()?;
 
         let payload = serde_json::to_string(command)?;
@@ -38,10 +48,12 @@ impl Bulb {
         let mut response = String::new();
         let mut reader = BufReader::new(stream);
         reader.read_line(&mut response)?;
+        let response = response.trim_end();
 
-        info!("Received: {}", response.trim_end());
+        info!("Received: {}", response);
+        let response = serde_json::from_str(response)?;
 
-        Ok(())
+        Ok(response)
     }
 }
 
@@ -49,11 +61,7 @@ fn main() -> std::io::Result<()> {
     simple_logger::init().unwrap();
 
     let b = Bulb::new("192.168.2.162");
-    let c = Command {
-        id: 1,
-        method: String::from("set_power"),
-        params: json![["on", "smooth", 500]],
-    };
+    let c = Command::new("set_power", json![["on", "smooth", 500]]);
 
     b.call(&c)?;
 
