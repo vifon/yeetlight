@@ -26,6 +26,27 @@ struct Bulb {
     addr: String,
 }
 
+enum BulbEffect {
+    Smooth(u32),
+    Sudden,
+}
+
+impl BulbEffect {
+    fn effect(&self) -> &'static str {
+        match self {
+            BulbEffect::Smooth(_) => "smooth",
+            BulbEffect::Sudden => "sudden",
+        }
+    }
+
+    fn duration(&self) -> u32 {
+        match self {
+            BulbEffect::Smooth(x) => *x,
+            BulbEffect::Sudden => 0,
+        }
+    }
+}
+
 impl Bulb {
     fn new(addr: &str) -> Self {
         Bulb {
@@ -37,10 +58,10 @@ impl Bulb {
         TcpStream::connect(&self.addr)
     }
 
-    fn call(self: &Self, command: &Command) -> io::Result<Value> {
+    fn call(self: &Self, command: Command) -> io::Result<Value> {
         let mut stream = self.connect()?;
 
-        let payload = serde_json::to_string(command)?;
+        let payload = serde_json::to_string(&command)?;
         info!("Sending: {}", payload);
         let payload = payload + "\r\n";
         stream.write(payload.as_bytes())?;
@@ -55,15 +76,25 @@ impl Bulb {
 
         Ok(response)
     }
+
+    fn set_power(self: &Self, state: bool, effect: BulbEffect) -> io::Result<Value> {
+        let state = match state {
+            true => "on",
+            false => "off",
+        };
+
+        self.call(Command::new(
+            "set_power",
+            json![[state, effect.effect(), effect.duration()]],
+        ))
+    }
 }
 
 fn main() -> std::io::Result<()> {
     simple_logger::init().unwrap();
 
     let b = Bulb::new("192.168.2.162");
-    let c = Command::new("set_power", json![["on", "smooth", 500]]);
-
-    b.call(&c)?;
+    b.set_power(true, BulbEffect::Smooth(500))?;
 
     Ok(())
 }
