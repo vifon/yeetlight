@@ -54,11 +54,11 @@ impl Bulb {
         }
     }
 
-    fn connect(self: &Self) -> io::Result<TcpStream> {
+    fn connect(&self) -> io::Result<TcpStream> {
         TcpStream::connect(&self.addr)
     }
 
-    fn call(self: &Self, command: Command) -> io::Result<Value> {
+    fn call(&self, command: Command) -> io::Result<Value> {
         let mut stream = self.connect()?;
 
         let payload = serde_json::to_string(&command)?;
@@ -77,7 +77,7 @@ impl Bulb {
         Ok(response)
     }
 
-    fn set_power(self: &Self, state: bool, effect: BulbEffect) -> io::Result<Value> {
+    fn set_power(&self, state: bool, effect: BulbEffect) -> io::Result<Value> {
         let state = match state {
             true => "on",
             false => "off",
