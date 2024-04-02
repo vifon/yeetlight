@@ -4,6 +4,7 @@ use std::collections::BTreeMap;
 use std::io;
 use std::io::{prelude::*, BufReader};
 use std::net::TcpStream;
+use std::num::ParseIntError;
 use thiserror::Error;
 
 use super::command::Command;
@@ -81,6 +82,13 @@ impl Temperature {
     }
 }
 
+pub struct Color(u32);
+impl Color {
+    pub fn from_hex(hex: &str) -> Result<Color, ParseIntError> {
+        Ok(Color(u32::from_str_radix(hex, 16)?))
+    }
+}
+
 impl Bulb {
     pub fn new(addr: &str) -> Self {
         Bulb {
@@ -134,6 +142,13 @@ impl Bulb {
         self.call(Command::new(
             "set_ct_abx",
             json![[temperature.0, effect.effect(), effect.duration()]],
+        ))
+    }
+
+    pub fn set_color(&self, color: Color, effect: Effect) -> io::Result<Value> {
+        self.call(Command::new(
+            "set_rgb",
+            json![[color.0, effect.effect(), effect.duration()]],
         ))
     }
 
