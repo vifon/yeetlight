@@ -1,5 +1,6 @@
 use log::info;
 use serde_json::{json, Value};
+use std::collections::BTreeMap;
 use std::io;
 use std::io::{prelude::*, BufReader};
 use std::net::TcpStream;
@@ -133,6 +134,21 @@ impl Bulb {
         self.call(Command::new(
             "set_ct_abx",
             json![[temperature.0, effect.effect(), effect.duration()]],
+        ))
+    }
+
+    pub fn get_props<'a>(&self, props: &[&'a str]) -> io::Result<BTreeMap<&'a str, String>> {
+        let response = self.call(Command::new("get_prop", json!(props)))?;
+        let values: Vec<String> = response
+            .as_object()
+            .expect("Got a response but not an object")["result"]
+            .as_array()
+            .expect("No results in the response")
+            .into_iter()
+            .map(|x| x.as_str().expect("Got an invalid prop value").to_owned())
+            .collect();
+        Ok(BTreeMap::from_iter(
+            props.into_iter().map(|x| *x).zip(values),
         ))
     }
 }

@@ -8,5 +8,8 @@ fn main() -> anyhow::Result<()> {
     b.set_brightness(Brightness::new(100)?, Effect::Smooth(500))?;
     b.set_temperature(Temperature::new(4700)?, Effect::Smooth(500))?;
 
+    let resp = b.get_props(&["power", "bright", "ct", "rgb", "color_mode"])?;
+    println!("Props: {:?}", resp);
+
     Ok(())
 }
