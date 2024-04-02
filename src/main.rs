@@ -1,4 +1,4 @@
-use yeetlight::bulb::*;
+use yeetlight::*;
 
 fn main() -> std::io::Result<()> {
     simple_logger::init().unwrap();
