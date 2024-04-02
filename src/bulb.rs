@@ -1,9 +1,9 @@
-use anyhow::anyhow;
 use log::info;
 use serde_json::{json, Value};
 use std::io;
 use std::io::{prelude::*, BufReader};
 use std::net::TcpStream;
+use thiserror::Error;
 
 use super::command::Command;
 
@@ -33,6 +33,14 @@ impl Effect {
     }
 }
 
+#[derive(Error, Debug)]
+pub enum RangeError {
+    #[error("Temperature {} not within [{}..{}]", .0, Temperature::MIN, Temperature::MAX)]
+    Temperature(u16),
+    #[error("Brightness {} not within [{}..{}]", .0, Brightness::MIN, Brightness::MAX)]
+    Brightness(u16),
+}
+
 trait BoundedRange {
     const MIN: u16;
     const MAX: u16;
@@ -48,11 +56,11 @@ impl BoundedRange for Brightness {
     const MAX: u16 = 100;
 }
 impl Brightness {
-    pub fn new(brightness: u16) -> anyhow::Result<Self> {
+    pub fn new(brightness: u16) -> Result<Self, RangeError> {
         if Self::valid_range(brightness) {
             Ok(Brightness(brightness))
         } else {
-            Err(anyhow!("Brightness out of range: {}", brightness))
+            Err(RangeError::Brightness(brightness))
         }
     }
 }
@@ -63,11 +71,11 @@ impl BoundedRange for Temperature {
     const MAX: u16 = 6500;
 }
 impl Temperature {
-    pub fn new(temperature: u16) -> anyhow::Result<Self> {
+    pub fn new(temperature: u16) -> Result<Self, RangeError> {
         if Self::valid_range(temperature) {
             Ok(Temperature(temperature))
         } else {
-            Err(anyhow!("Temperature out of range: {}", temperature))
+            Err(RangeError::Temperature(temperature))
         }
     }
 }
