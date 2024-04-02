@@ -130,24 +130,32 @@ impl Bulb {
         ))
     }
 
-    pub fn set_brightness(&self, brightness: Brightness, effect: Effect) -> io::Result<Value> {
+    pub fn set_brightness(
+        &self,
+        Brightness(brightness): Brightness,
+        effect: Effect,
+    ) -> io::Result<Value> {
         self.call(Command::new(
             "set_bright",
-            json![[brightness.0, effect.effect(), effect.duration()]],
+            json![[brightness, effect.effect(), effect.duration()]],
         ))
     }
 
-    pub fn set_temperature(&self, temperature: Temperature, effect: Effect) -> io::Result<Value> {
+    pub fn set_temperature(
+        &self,
+        Temperature(temperature): Temperature,
+        effect: Effect,
+    ) -> io::Result<Value> {
         self.call(Command::new(
             "set_ct_abx",
-            json![[temperature.0, effect.effect(), effect.duration()]],
+            json![[temperature, effect.effect(), effect.duration()]],
         ))
     }
 
-    pub fn set_color(&self, color: Color, effect: Effect) -> io::Result<Value> {
+    pub fn set_color(&self, Color(color): Color, effect: Effect) -> io::Result<Value> {
         self.call(Command::new(
             "set_rgb",
-            json![[color.0, effect.effect(), effect.duration()]],
+            json![[color, effect.effect(), effect.duration()]],
         ))
     }
 
