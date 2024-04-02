@@ -1,6 +1,6 @@
 use yeetlight::*;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> anyhow::Result<()> {
     simple_logger::init().unwrap();
 
     let b = Bulb::new("192.168.2.162");
