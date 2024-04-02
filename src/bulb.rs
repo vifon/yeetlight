@@ -13,7 +13,6 @@ pub struct Bulb {
     addr: String,
 }
 
-#[allow(dead_code)]
 pub enum Effect {
     Smooth(u32),
     Sudden,
