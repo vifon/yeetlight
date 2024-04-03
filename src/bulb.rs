@@ -7,7 +7,7 @@ use std::net::TcpStream;
 use std::num::ParseIntError;
 use thiserror::Error;
 
-use super::command::Command;
+use crate::command::Command;
 
 pub struct Bulb {
     addr: String,
