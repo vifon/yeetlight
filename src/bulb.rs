@@ -166,11 +166,9 @@ impl Bulb {
             .expect("Got a response but not an object")["result"]
             .as_array()
             .expect("No results in the response")
-            .into_iter()
+            .iter()
             .map(|x| x.as_str().expect("Got an invalid prop value").to_owned())
             .collect();
-        Ok(BTreeMap::from_iter(
-            props.into_iter().map(|x| *x).zip(values),
-        ))
+        Ok(BTreeMap::from_iter(props.iter().copied().zip(values)))
     }
 }
