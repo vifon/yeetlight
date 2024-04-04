@@ -14,18 +14,22 @@ struct PowerParams {
     bulb: String,
 }
 
-async fn handler_power_on(Query(params): Query<PowerParams>) -> Result<Json<Value>, StatusCode> {
+async fn handler_power_on(
+    Query(params): Query<PowerParams>,
+) -> Result<Json<Value>, (StatusCode, String)> {
     let bulb = Bulb::new(&params.bulb);
     let response = bulb
         .set_power(true, Effect::Smooth(500))
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(response))
 }
-async fn handler_power_off(Query(params): Query<PowerParams>) -> Result<Json<Value>, StatusCode> {
+async fn handler_power_off(
+    Query(params): Query<PowerParams>,
+) -> Result<Json<Value>, (StatusCode, String)> {
     let bulb = Bulb::new(&params.bulb);
     let response = bulb
         .set_power(false, Effect::Smooth(500))
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(response))
 }
 async fn handler_power_toggle(
@@ -41,13 +45,13 @@ struct BrightnessParams {
 }
 async fn handler_brightness(
     Query(params): Query<BrightnessParams>,
-) -> Result<Json<Value>, StatusCode> {
+) -> Result<Json<Value>, (StatusCode, String)> {
     let bulb = Bulb::new(&params.bulb);
-    let brightness =
-        Brightness::new(params.brightness).map_err(|_| StatusCode::UNPROCESSABLE_ENTITY)?;
+    let brightness = Brightness::new(params.brightness)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
         .set_brightness(brightness, Effect::Smooth(500))
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(response))
 }
 
@@ -58,13 +62,13 @@ struct TemperatureParams {
 }
 async fn handler_temperature(
     Query(params): Query<TemperatureParams>,
-) -> Result<Json<Value>, StatusCode> {
+) -> Result<Json<Value>, (StatusCode, String)> {
     let bulb = Bulb::new(&params.bulb);
-    let temperature =
-        Temperature::new(params.temperature).map_err(|_| StatusCode::UNPROCESSABLE_ENTITY)?;
+    let temperature = Temperature::new(params.temperature)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
         .set_temperature(temperature, Effect::Smooth(500))
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(response))
 }
 
@@ -73,12 +77,15 @@ struct ColorParams {
     bulb: String,
     color: String,
 }
-async fn handler_color(Query(params): Query<ColorParams>) -> Result<Json<Value>, StatusCode> {
+async fn handler_color(
+    Query(params): Query<ColorParams>,
+) -> Result<Json<Value>, (StatusCode, String)> {
     let bulb = Bulb::new(&params.bulb);
-    let color = Color::from_hex(&params.color).map_err(|_| StatusCode::UNPROCESSABLE_ENTITY)?;
+    let color = Color::from_hex(&params.color)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
         .set_color(color, Effect::Smooth(500))
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(response))
 }
 
@@ -87,11 +94,13 @@ struct InfoParams {
     bulb: String,
 }
 
-async fn handler_info(Query(params): Query<InfoParams>) -> Result<Json<Value>, StatusCode> {
+async fn handler_info(
+    Query(params): Query<InfoParams>,
+) -> Result<Json<Value>, (StatusCode, String)> {
     let bulb = Bulb::new(&params.bulb);
     let response = bulb
         .get_props(&["power", "bright", "ct", "rgb", "color_mode"])
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(json!(response)))
 }
 
