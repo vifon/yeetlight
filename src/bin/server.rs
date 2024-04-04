@@ -127,12 +127,14 @@ fn bulb_v2_routes() -> Router {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::io::Result<()> {
     let routes = Router::new()
         .merge(bulb_v1_routes())
         .nest("/v1", bulb_v1_routes())
         .nest("/v2", bulb_v2_routes());
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
-    axum::serve(listener, routes).await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await?;
+    axum::serve(listener, routes).await?;
+
+    Ok(())
 }
