@@ -13,6 +13,7 @@ pub struct Bulb {
     addr: String,
 }
 
+#[derive(Copy, Clone)]
 pub enum Effect {
     Smooth(u16),
     Sudden,
@@ -51,6 +52,7 @@ trait BoundedRange {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Brightness(u16);
 impl BoundedRange for Brightness {
     const MIN: u16 = 1;
@@ -66,6 +68,7 @@ impl Brightness {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Temperature(u16);
 impl BoundedRange for Temperature {
     const MIN: u16 = 1700;
@@ -81,6 +84,7 @@ impl Temperature {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Color(u32);
 impl Color {
     pub fn from_hex(hex: &str) -> Result<Color, ParseIntError> {
