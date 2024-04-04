@@ -41,13 +41,15 @@ pub enum RangeError {
     Temperature(u16),
     #[error("Brightness {} not within [{}..{}]", .0, Brightness::MIN, Brightness::MAX)]
     Brightness(u16),
+    #[error("Percentage {} not within [{}..{}]", .0, Percentage::MIN, Percentage::MAX)]
+    Percentage(i16),
 }
 
 trait BoundedRange {
-    const MIN: u16;
-    const MAX: u16;
+    const MIN: i32;
+    const MAX: i32;
 
-    fn valid_range(value: u16) -> bool {
+    fn valid_range(value: i32) -> bool {
         (Self::MIN..=Self::MAX).contains(&value)
     }
 }
@@ -55,12 +57,12 @@ trait BoundedRange {
 #[derive(Copy, Clone)]
 pub struct Brightness(u16);
 impl BoundedRange for Brightness {
-    const MIN: u16 = 1;
-    const MAX: u16 = 100;
+    const MIN: i32 = 1;
+    const MAX: i32 = 100;
 }
 impl Brightness {
     pub fn new(brightness: u16) -> Result<Self, RangeError> {
-        if Self::valid_range(brightness) {
+        if Self::valid_range(brightness as i32) {
             Ok(Brightness(brightness))
         } else {
             Err(RangeError::Brightness(brightness))
@@ -71,12 +73,12 @@ impl Brightness {
 #[derive(Copy, Clone)]
 pub struct Temperature(u16);
 impl BoundedRange for Temperature {
-    const MIN: u16 = 1700;
-    const MAX: u16 = 6500;
+    const MIN: i32 = 1700;
+    const MAX: i32 = 6500;
 }
 impl Temperature {
     pub fn new(temperature: u16) -> Result<Self, RangeError> {
-        if Self::valid_range(temperature) {
+        if Self::valid_range(temperature as i32) {
             Ok(Temperature(temperature))
         } else {
             Err(RangeError::Temperature(temperature))
@@ -89,6 +91,22 @@ pub struct Color(u32);
 impl Color {
     pub fn from_hex(hex: &str) -> Result<Color, ParseIntError> {
         Ok(Color(u32::from_str_radix(hex, 16)?))
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct Percentage(i16);
+impl BoundedRange for Percentage {
+    const MIN: i32 = -100;
+    const MAX: i32 = 100;
+}
+impl Percentage {
+    pub fn new(percentage: i16) -> Result<Self, RangeError> {
+        if Self::valid_range(percentage as i32) {
+            Ok(Percentage(percentage))
+        } else {
+            Err(RangeError::Percentage(percentage))
+        }
     }
 }
 
@@ -142,6 +160,17 @@ impl Bulb {
         self.call(Command::new(
             "set_bright",
             json![[brightness, effect.effect(), effect.duration()]],
+        ))
+    }
+
+    pub fn adjust_brightness(
+        &self,
+        Percentage(percentage): Percentage,
+        effect: Effect,
+    ) -> io::Result<Value> {
+        self.call(Command::new(
+            "adjust_bright",
+            json![[percentage, effect.effect(), effect.duration()]],
         ))
     }
 
