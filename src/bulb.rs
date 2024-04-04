@@ -14,7 +14,7 @@ pub struct Bulb {
 }
 
 pub enum Effect {
-    Smooth(u32),
+    Smooth(u16),
     Sudden,
 }
 
@@ -26,7 +26,7 @@ impl Effect {
         }
     }
 
-    pub fn duration(&self) -> u32 {
+    pub fn duration(&self) -> u16 {
         match self {
             Effect::Smooth(x) => *x,
             Effect::Sudden => 0,
