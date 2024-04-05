@@ -189,7 +189,7 @@ impl Bulb {
         ))
     }
 
-    pub fn get_props<'a>(&self, props: &[&'a str]) -> io::Result<BTreeMap<&'a str, String>> {
+    pub fn get_props(&self, props: &[&str]) -> io::Result<Vec<String>> {
         let response = self.call(Command::new("get_prop", json!(props)))?;
         let values: Vec<String> = response
             .as_object()
@@ -199,6 +199,11 @@ impl Bulb {
             .iter()
             .map(|x| x.as_str().expect("Got an invalid prop value").to_owned())
             .collect();
+        Ok(values)
+    }
+
+    pub fn get_props_map<'a>(&self, props: &[&'a str]) -> io::Result<BTreeMap<&'a str, String>> {
+        let values = self.get_props(props)?;
         Ok(BTreeMap::from_iter(props.iter().copied().zip(values)))
     }
 }

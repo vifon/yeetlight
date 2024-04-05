@@ -1,4 +1,4 @@
-use std::{env, thread, time::Duration};
+use std::{collections::BTreeMap, env, thread, time::Duration};
 
 use axum::{
     extract::Query,
@@ -46,7 +46,7 @@ async fn handler_power_toggle(
         .get_props(&["power"])
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     let power_state = props_response
-        .get("power")
+        .get(0)
         .expect("Got a response but with no expected value");
     match power_state.as_str() {
         "on" => handler_power_off(Query(params)).await,
@@ -65,7 +65,7 @@ async fn handler_morning_alarm(Query(params): Query<PowerParams>) -> StatusCode 
         bulb.set_brightness(Brightness::new(1)?, Effect::Sudden)?;
         bulb.set_temperature(Temperature::new(6500)?, Effect::Sudden)?;
         for _ in 0..50 {
-            if bulb.get_props(&["power"])?["power"].as_str() != "on" {
+            if bulb.get_props(&["power"])?[0].as_str() != "on" {
                 break;
             }
             bulb.adjust_brightness(Percentage::new(2)?, 60_000)?;
@@ -136,8 +136,8 @@ async fn handler_info(
     Query(params): Query<InfoParams>,
 ) -> Result<Json<Value>, (StatusCode, String)> {
     let bulb = Bulb::new(&params.bulb);
-    let response = bulb
-        .get_props(&["power", "bright", "ct", "rgb", "color_mode"])
+    let response: BTreeMap<&str, String> = bulb
+        .get_props_map(&["power", "bright", "ct", "rgb", "color_mode"])
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(json!(response)))
 }
