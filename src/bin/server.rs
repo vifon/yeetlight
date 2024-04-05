@@ -6,6 +6,7 @@ use axum::{
     Router,
 };
 use axum_embed::ServeEmbed;
+use log::info;
 use rust_embed::RustEmbed;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -147,7 +148,16 @@ fn bulb_v2_routes() -> Router {
 struct Assets;
 
 #[tokio::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> anyhow::Result<()> {
+    simple_logger::init().unwrap();
+
+    let args: Vec<String> = std::env::args().collect();
+    let bind_addr = match args.len() {
+        1 => Ok("0.0.0.0:8080"),
+        2 => Ok(args[1].as_ref()),
+        _ => Err(anyhow::Error::msg(format!("Wrong arguments: {args:?}"))),
+    }?;
+
     let serve_assets = ServeEmbed::<Assets>::new();
     let routes = Router::new()
         .merge(bulb_v1_routes())
@@ -155,7 +165,8 @@ async fn main() -> std::io::Result<()> {
         .nest("/v2", bulb_v2_routes())
         .fallback_service(serve_assets);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await?;
+    let listener = tokio::net::TcpListener::bind(bind_addr).await?;
+    info!("Listening on http://{bind_addr}");
     axum::serve(listener, routes).await?;
 
     Ok(())
