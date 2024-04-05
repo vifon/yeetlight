@@ -166,12 +166,9 @@ impl Bulb {
     pub fn adjust_brightness(
         &self,
         Percentage(percentage): Percentage,
-        effect: Effect,
+        duration: u16,
     ) -> io::Result<Value> {
-        self.call(Command::new(
-            "adjust_bright",
-            json![[percentage, effect.effect(), effect.duration()]],
-        ))
+        self.call(Command::new("adjust_bright", json![[percentage, duration]]))
     }
 
     pub fn set_temperature(

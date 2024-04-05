@@ -10,7 +10,7 @@ fn main() -> anyhow::Result<()> {
     sleep(Duration::from_secs(1));
     b.set_brightness(Brightness::new(30)?, Effect::Smooth(500))?;
     sleep(Duration::from_secs(1));
-    b.adjust_brightness(Percentage::new(30)?, Effect::Smooth(500))?;
+    b.adjust_brightness(Percentage::new(30)?, 500)?;
     sleep(Duration::from_secs(1));
     b.set_brightness(Brightness::new(100)?, Effect::Smooth(500))?;
     b.set_temperature(Temperature::new(4700)?, Effect::Smooth(500))?;
