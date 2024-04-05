@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, thread, time::Duration};
 
 use axum::{
     extract::Query,
@@ -13,7 +13,7 @@ use rust_embed::RustEmbed;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
-use yeetlight::{Brightness, Bulb, Color, Effect, Temperature};
+use yeetlight::{Brightness, Bulb, Color, Effect, Percentage, Temperature};
 
 #[derive(Debug, Deserialize)]
 struct PowerParams {
@@ -56,6 +56,24 @@ async fn handler_power_toggle(
             format!("Unexpected light state: {power_state}"),
         )),
     }
+}
+
+async fn handler_morning_alarm(Query(params): Query<PowerParams>) -> StatusCode {
+    let bulb = Bulb::new(&params.bulb);
+    thread::spawn(move || -> anyhow::Result<()> {
+        bulb.set_power(true, Effect::Smooth(500))?;
+        bulb.set_brightness(Brightness::new(1)?, Effect::Sudden)?;
+        bulb.set_temperature(Temperature::new(6500)?, Effect::Sudden)?;
+        for _ in 0..50 {
+            if bulb.get_props(&["power"])?["power"].as_str() != "on" {
+                break;
+            }
+            bulb.adjust_brightness(Percentage::new(2)?, 60_000)?;
+            thread::sleep(Duration::from_secs(60));
+        }
+        Ok(())
+    });
+    StatusCode::ACCEPTED
 }
 
 #[derive(Debug, Deserialize)]
@@ -122,10 +140,6 @@ async fn handler_info(
         .get_props(&["power", "bright", "ct", "rgb", "color_mode"])
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(json!(response)))
-}
-
-async fn handler_morning_alarm() -> Json<Value> {
-    todo!()
 }
 
 fn bulb_v1_routes() -> Router {
