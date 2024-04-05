@@ -1,3 +1,5 @@
+use std::env;
+
 use axum::{
     extract::Query,
     http::StatusCode,
@@ -10,6 +12,7 @@ use log::info;
 use rust_embed::RustEmbed;
 use serde::Deserialize;
 use serde_json::{json, Value};
+use tower_http::trace::TraceLayer;
 use yeetlight::{Brightness, Bulb, Color, Effect, Temperature};
 
 #[derive(Debug, Deserialize)]
@@ -149,9 +152,12 @@ struct Assets;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    simple_logger::init().unwrap();
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "debug")
+    }
+    simple_logger::init_with_env()?;
 
-    let args: Vec<String> = std::env::args().collect();
+    let args: Vec<String> = env::args().collect();
     let bind_addr = match args.len() {
         1 => Ok("0.0.0.0:8080"),
         2 => Ok(args[1].as_ref()),
@@ -163,7 +169,8 @@ async fn main() -> anyhow::Result<()> {
         .merge(bulb_v1_routes())
         .nest("/v1", bulb_v1_routes())
         .nest("/v2", bulb_v2_routes())
-        .fallback_service(serve_assets);
+        .fallback_service(serve_assets)
+        .layer(TraceLayer::new_for_http());
 
     let listener = tokio::net::TcpListener::bind(bind_addr).await?;
     info!("Listening on http://{bind_addr}");
