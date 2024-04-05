@@ -1,0 +1,33 @@
+input[type="range"] {
+  margin: 3px;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 0.5em;
+}
+
+.brightness input[type="range"]::-moz-range-track {
+  background: linear-gradient(to right, #000, #ddd);
+}
+
+.temperature input[type="range"]::-moz-range-track {
+  background: linear-gradient(to right, darkorange, yellow, cyan);
+}
+
+.fading {
+  transition: opacity 0.5s;
+}
+.disabled {
+  opacity: 30%;
+}
+
+.center {
+  text-align: center;
+}
+.center table {
+  display: inline-block;
+}
+
+.card {
+  padding: 0.5em;
+}

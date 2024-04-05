@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Yeetlight</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+    <div id="app">
+      <div class="section">
+        <div class="columns is-multiline">
+          <bulb v-for="bulb, name in $store.state.bulbs"
+                :key="name"
+                :addr="bulb.addr"
+                :name="name"
+                class="column"></bulb>
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script src="js/vue.min.js"></script>
+  <script src="js/vuex.min.js"></script>
+  <script src="js/axios.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/bulma.min.css">
+
+  <template id="bulb-template">
+    <div class="bulb">
+      <div class="center card">
+        <div>{{ name }}</div>
+        <div>
+          <button class="button"
+                  :class="power === true ? 'is-primary' : ''"
+                  @click="setPower(true)">ON</button>
+          <button class="button"
+                  :class="power === false ? 'is-primary' : ''"
+                  @click="setPower(false)">OFF</button>
+        </div>
+        <table class="fading"
+               :class="{ disabled: !power }">
+          <tr class="brightness">
+            <td>Brightness</td>
+            <td>
+              <input type="range"
+                     min="0" max="100"
+                     step="5"
+                     name="brightness"
+                     value="brightness"
+                     v-model="brightness"
+                     @change="setBrightness(brightness)"
+              />
+            </td>
+            <td>{{ brightness }}%</td>
+          </tr>
+          <tr class="temperature">
+            <td>Temperature</td>
+            <td>
+              <input type="range"
+                     min="1700" max="6500"
+                     step="100"
+                     name="temperature"
+                     value="temperature"
+                     v-model="temperature"
+                     @change="setTemperature(temperature)"
+              />
+            </td>
+            <td>{{ temperature }}K</td>
+          </tr>
+          <tr v-if="isRGB">
+            <td></td>
+            <td>
+              <input type="color"
+                     name="color"
+                     value="color"
+                     v-model="color"
+                     @change="setColor(color)"
+              />
+            </td>
+            <td></td>
+          </tr>
+        </table>
+        <div v-if="linked.length > 0" class="linked">
+          <span>Linked:</span>
+          <ul>
+            <li v-for="link in linked">
+              <label>
+                <input type="checkbox"
+                       v-model="link.enable"
+                       :key="link.name"
+                       :name="link.name"
+                       :value="link.name"
+                />
+                <span>{{ link.name }}</span>
+              </label>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script src="yeetlight.js"></script>
+</html>

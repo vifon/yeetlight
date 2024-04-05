@@ -5,6 +5,8 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use axum_embed::ServeEmbed;
+use rust_embed::RustEmbed;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use yeetlight::{Brightness, Bulb, Color, Effect, Temperature};
@@ -126,12 +128,18 @@ fn bulb_v2_routes() -> Router {
     // .route("/off", get(handler_power_off))
 }
 
+#[derive(RustEmbed, Clone)]
+#[folder = "public/"]
+struct Assets;
+
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
+    let serve_assets = ServeEmbed::<Assets>::new();
     let routes = Router::new()
         .merge(bulb_v1_routes())
         .nest("/v1", bulb_v1_routes())
-        .nest("/v2", bulb_v2_routes());
+        .nest("/v2", bulb_v2_routes())
+        .fallback_service(serve_assets);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await?;
     axum::serve(listener, routes).await?;
