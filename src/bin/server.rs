@@ -35,9 +35,23 @@ async fn handler_power_off(
     Ok(Json(response))
 }
 async fn handler_power_toggle(
-    Query(_params): Query<PowerParams>,
-) -> Result<Json<Value>, StatusCode> {
-    todo!();
+    Query(params): Query<PowerParams>,
+) -> Result<Json<Value>, (StatusCode, String)> {
+    let bulb = Bulb::new(&params.bulb);
+    let props_response = bulb
+        .get_props(&["power"])
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let power_state = props_response
+        .get("power")
+        .expect("Got a response but with no expected value");
+    match power_state.as_str() {
+        "on" => handler_power_off(Query(params)).await,
+        "off" => handler_power_on(Query(params)).await,
+        _ => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Unexpected light state: {power_state}"),
+        )),
+    }
 }
 
 #[derive(Debug, Deserialize)]
