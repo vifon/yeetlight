@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, env, net::SocketAddr, time::Duration};
 
 use axum::{
-    extract::Query,
+    extract::{Query, State},
     http::StatusCode,
     response::Json,
     routing::{get, post},
@@ -155,6 +155,20 @@ async fn handler_info(
     Ok(Json(json!(response)))
 }
 
+fn config_routes(config: &Option<Value>) -> Router {
+    async fn handler_config(State(config): State<Value>) -> Json<Value> {
+        Json(config)
+    }
+
+    if let Some(config) = config {
+        Router::new()
+            .route("/config.json", get(handler_config))
+            .with_state(config.clone())
+    } else {
+        Router::new()
+    }
+}
+
 fn bulb_v1_routes() -> Router {
     Router::new()
         .route("/on", post(handler_power_on))
@@ -185,6 +199,10 @@ struct Args {
     #[arg(long, default_value = "0.0.0.0:8080")]
     iface: String,
 
+    /// Path to the config.
+    #[arg(long, default_value = None)]
+    config: Option<String>,
+
     /// Launch a browser.
     #[arg(long)]
     browse: bool,
@@ -199,6 +217,13 @@ async fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
 
+    let config = if let Some(config_path) = args.config {
+        let config = std::fs::read_to_string(config_path)?;
+        Some(serde_json::from_str(config.as_str())?)
+    } else {
+        None
+    };
+
     let serve_assets = ServeEmbed::<Assets>::new();
     let trace_layer = TraceLayer::new_for_http()
         .make_span_with(DefaultMakeSpan::new().level(tracing::Level::INFO))
@@ -207,6 +232,7 @@ async fn main() -> anyhow::Result<()> {
         .merge(bulb_v1_routes())
         .nest("/v1", bulb_v1_routes())
         .nest("/v2", bulb_v2_routes())
+        .merge(config_routes(&config))
         .fallback_service(serve_assets)
         .layer(trace_layer);
 
