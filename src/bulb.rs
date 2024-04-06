@@ -2,10 +2,11 @@ use log::info;
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::io;
-use std::io::{prelude::*, BufReader};
-use std::net::TcpStream;
 use std::num::ParseIntError;
 use thiserror::Error;
+use tokio::io::BufReader;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
+use tokio::net::TcpStream;
 
 use crate::command::Command;
 
@@ -117,21 +118,21 @@ impl Bulb {
         }
     }
 
-    fn connect(&self) -> io::Result<TcpStream> {
-        TcpStream::connect(&self.addr)
+    async fn connect(&self) -> io::Result<TcpStream> {
+        TcpStream::connect(&self.addr).await
     }
 
-    fn call(&self, command: Command) -> io::Result<Value> {
-        let mut stream = self.connect()?;
+    async fn call(&self, command: Command) -> io::Result<Value> {
+        let mut stream = self.connect().await?;
 
         let payload = serde_json::to_string(&command)?;
         info!("Sending: {}", payload);
         let payload = payload + "\r\n";
-        stream.write_all(payload.as_bytes())?;
+        stream.write_all(payload.as_bytes()).await?;
 
         let mut response = String::new();
         let mut reader = BufReader::new(stream);
-        reader.read_line(&mut response)?;
+        reader.read_line(&mut response).await?;
         let response = response.trim_end();
 
         info!("Received: {}", response);
@@ -140,7 +141,7 @@ impl Bulb {
         Ok(response)
     }
 
-    pub fn set_power(&self, state: bool, effect: Effect) -> io::Result<Value> {
+    pub async fn set_power(&self, state: bool, effect: Effect) -> io::Result<Value> {
         let state = match state {
             true => "on",
             false => "off",
@@ -150,9 +151,10 @@ impl Bulb {
             "set_power",
             json![[state, effect.effect(), effect.duration()]],
         ))
+        .await
     }
 
-    pub fn set_brightness(
+    pub async fn set_brightness(
         &self,
         Brightness(brightness): Brightness,
         effect: Effect,
@@ -161,17 +163,19 @@ impl Bulb {
             "set_bright",
             json![[brightness, effect.effect(), effect.duration()]],
         ))
+        .await
     }
 
-    pub fn adjust_brightness(
+    pub async fn adjust_brightness(
         &self,
         Percentage(percentage): Percentage,
         duration: u16,
     ) -> io::Result<Value> {
         self.call(Command::new("adjust_bright", json![[percentage, duration]]))
+            .await
     }
 
-    pub fn set_temperature(
+    pub async fn set_temperature(
         &self,
         Temperature(temperature): Temperature,
         effect: Effect,
@@ -180,17 +184,19 @@ impl Bulb {
             "set_ct_abx",
             json![[temperature, effect.effect(), effect.duration()]],
         ))
+        .await
     }
 
-    pub fn set_color(&self, Color(color): Color, effect: Effect) -> io::Result<Value> {
+    pub async fn set_color(&self, Color(color): Color, effect: Effect) -> io::Result<Value> {
         self.call(Command::new(
             "set_rgb",
             json![[color, effect.effect(), effect.duration()]],
         ))
+        .await
     }
 
-    pub fn get_props(&self, props: &[&str]) -> io::Result<Vec<String>> {
-        let response = self.call(Command::new("get_prop", json!(props)))?;
+    pub async fn get_props(&self, props: &[&str]) -> io::Result<Vec<String>> {
+        let response = self.call(Command::new("get_prop", json!(props))).await?;
         let values: Vec<String> = response
             .as_object()
             .expect("Got a response but not an object")["result"]
@@ -202,8 +208,11 @@ impl Bulb {
         Ok(values)
     }
 
-    pub fn get_props_map<'a>(&self, props: &[&'a str]) -> io::Result<BTreeMap<&'a str, String>> {
-        let values = self.get_props(props)?;
+    pub async fn get_props_map<'a>(
+        &self,
+        props: &[&'a str],
+    ) -> io::Result<BTreeMap<&'a str, String>> {
+        let values = self.get_props(props).await?;
         Ok(BTreeMap::from_iter(props.iter().copied().zip(values)))
     }
 }

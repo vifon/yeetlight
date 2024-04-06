@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, env, net::SocketAddr, thread, time::Duration};
+use std::{collections::BTreeMap, env, net::SocketAddr, time::Duration};
 
 use axum::{
     extract::Query,
@@ -27,6 +27,7 @@ async fn handler_power_on(
     let bulb = Bulb::new(&params.bulb);
     let response = bulb
         .set_power(true, Effect::Smooth(500))
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(response))
 }
@@ -36,6 +37,7 @@ async fn handler_power_off(
     let bulb = Bulb::new(&params.bulb);
     let response = bulb
         .set_power(false, Effect::Smooth(500))
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(response))
 }
@@ -45,6 +47,7 @@ async fn handler_power_toggle(
     let bulb = Bulb::new(&params.bulb);
     let props_response = bulb
         .get_props(&["power"])
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     let power_state = props_response
         .get(0)
@@ -61,18 +64,23 @@ async fn handler_power_toggle(
 
 async fn handler_morning_alarm(Query(params): Query<PowerParams>) -> StatusCode {
     let bulb = Bulb::new(&params.bulb);
-    thread::spawn(move || -> anyhow::Result<()> {
-        bulb.set_power(true, Effect::Smooth(500))?;
-        bulb.set_brightness(Brightness::new(1)?, Effect::Sudden)?;
-        bulb.set_temperature(Temperature::new(6500)?, Effect::Sudden)?;
+    tokio::task::spawn(async move {
+        bulb.set_power(true, Effect::Smooth(500)).await.unwrap();
+        bulb.set_brightness(Brightness::new(1).unwrap(), Effect::Sudden)
+            .await
+            .unwrap();
+        bulb.set_temperature(Temperature::new(6500).unwrap(), Effect::Sudden)
+            .await
+            .unwrap();
         for _ in 0..50 {
-            if bulb.get_props(&["power"])?[0].as_str() != "on" {
+            if bulb.get_props(&["power"]).await.unwrap()[0].as_str() != "on" {
                 break;
             }
-            bulb.adjust_brightness(Percentage::new(2)?, 60_000)?;
-            thread::sleep(Duration::from_secs(60));
+            bulb.adjust_brightness(Percentage::new(2).unwrap(), 60_000)
+                .await
+                .unwrap();
+            tokio::time::sleep(Duration::from_secs(60)).await;
         }
-        Ok(())
     });
     StatusCode::ACCEPTED
 }
@@ -90,6 +98,7 @@ async fn handler_brightness(
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
         .set_brightness(brightness, Effect::Smooth(500))
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(response))
 }
@@ -107,6 +116,7 @@ async fn handler_temperature(
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
         .set_temperature(temperature, Effect::Smooth(500))
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(response))
 }
@@ -124,6 +134,7 @@ async fn handler_color(
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
         .set_color(color, Effect::Smooth(500))
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(response))
 }
@@ -139,6 +150,7 @@ async fn handler_info(
     let bulb = Bulb::new(&params.bulb);
     let response: BTreeMap<&str, String> = bulb
         .get_props_map(&["power", "bright", "ct", "rgb", "color_mode"])
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(json!(response)))
 }
