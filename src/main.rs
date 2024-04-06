@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, env, thread, time::Duration};
+use std::{collections::BTreeMap, env, net::SocketAddr, thread, time::Duration};
 
 use axum::{
     extract::Query,
@@ -198,7 +198,7 @@ async fn main() -> anyhow::Result<()> {
         .fallback_service(serve_assets)
         .layer(trace_layer);
 
-    let bind_addr = args.iface.as_str();
+    let bind_addr: SocketAddr = args.iface.parse()?;
     let listener = tokio::net::TcpListener::bind(bind_addr).await?;
 
     if args.browse {
