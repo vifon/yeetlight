@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0.81"
 axum = "0.7.5"
 axum-embed = "0.1.0"
+clap = { version = "4.5.4", features = ["derive"] }
 log = "0.4.21"
 rust-embed = { version = "8.3.0", features = ["debug-embed"] }
 serde = { version = "1.0.197", features = ["derive"] }

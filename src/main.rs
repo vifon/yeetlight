@@ -8,6 +8,7 @@ use axum::{
     Router,
 };
 use axum_embed::ServeEmbed;
+use clap::Parser;
 use log::info;
 use rust_embed::RustEmbed;
 use serde::Deserialize;
@@ -164,6 +165,19 @@ fn bulb_v2_routes() -> Router {
 #[folder = "public/"]
 struct Assets;
 
+/// A self-hosted Yeelight smartlight control panel.
+#[derive(Parser, Debug)]
+#[command(version, about)]
+struct Args {
+    /// Network interface to bind to.
+    #[arg(long, default_value = "0.0.0.0:8080")]
+    iface: String,
+
+    /// Launch a browser.
+    #[arg(long)]
+    browse: bool,
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     if env::var("RUST_LOG").is_err() {
@@ -171,12 +185,7 @@ async fn main() -> anyhow::Result<()> {
     }
     simple_logger::init_with_env()?;
 
-    let args: Vec<String> = env::args().collect();
-    let bind_addr = match args.len() {
-        1 => Ok("0.0.0.0:8080"),
-        2 => Ok(args[1].as_ref()),
-        _ => Err(anyhow::Error::msg(format!("Wrong arguments: {args:?}"))),
-    }?;
+    let args = Args::parse();
 
     let serve_assets = ServeEmbed::<Assets>::new();
     let trace_layer = TraceLayer::new_for_http()
@@ -189,7 +198,16 @@ async fn main() -> anyhow::Result<()> {
         .fallback_service(serve_assets)
         .layer(trace_layer);
 
+    let bind_addr = args.iface.as_str();
     let listener = tokio::net::TcpListener::bind(bind_addr).await?;
+
+    if args.browse {
+        std::process::Command::new("xdg-open")
+            .arg(format!("http://{bind_addr}"))
+            .spawn()
+            .expect("Failed to launch the web browser");
+    }
+
     info!("Listening on http://{bind_addr}");
     axum::serve(listener, routes).await?;
 
