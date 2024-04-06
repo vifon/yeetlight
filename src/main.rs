@@ -50,7 +50,7 @@ async fn handler_power_toggle(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     let power_state = props_response
-        .get(0)
+        .first()
         .expect("Got a response but with no expected value");
     match power_state.as_str() {
         "on" => handler_power_off(Query(params)).await,
