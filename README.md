@@ -21,7 +21,7 @@ Additional features:
   subpanels per light as in the official app
 - responsive web design
 
-![](https://raw.githubusercontent.com/vifon/yeetlight/master/example/screenshot1.png)
+![](https://raw.githubusercontent.com/vifon/yeetlight/golang/master/example/screenshot1.png)
 
 ## Dependencies
 
