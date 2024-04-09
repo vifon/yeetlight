@@ -1,5 +1,4 @@
 mod range_trait;
-pub use range_trait::RangeError;
 
 mod effect;
 pub use effect::*;
