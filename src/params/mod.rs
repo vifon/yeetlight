@@ -1,4 +1,5 @@
-mod range_trait;
+mod bounded_range;
+pub use bounded_range::BoundedRange;
 
 mod effect;
 pub use effect::*;

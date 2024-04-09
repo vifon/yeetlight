@@ -14,7 +14,8 @@ use rust_embed::RustEmbed;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
-use yeetlight::{Brightness, Bulb, Color, Effect, Percentage, Temperature};
+
+use yeetlight::*;
 
 #[derive(Debug, Deserialize)]
 struct PowerParams {
