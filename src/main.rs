@@ -67,20 +67,21 @@ async fn handler_morning_alarm(Query(params): Query<PowerParams>) -> StatusCode 
     let bulb = Bulb::new(&params.bulb);
     tokio::task::spawn(async move {
         bulb.set_power(true, Effect::Smooth(500)).await.unwrap();
-        bulb.set_brightness(Brightness::new(1).unwrap(), Effect::Sudden)
+        bulb.set_brightness(Brightness::new(Brightness::MIN).unwrap(), Effect::Sudden)
             .await
             .unwrap();
-        bulb.set_temperature(Temperature::new(6500).unwrap(), Effect::Sudden)
+        bulb.set_temperature(Temperature::new(Temperature::MAX).unwrap(), Effect::Sudden)
             .await
             .unwrap();
         for _ in 0..50 {
             if bulb.get_props(&["power"]).await.unwrap()[0].as_str() != "on" {
                 break;
             }
-            bulb.adjust_brightness(Percentage::new(2).unwrap(), 60_000)
+            let duration = 60_000;
+            bulb.adjust_brightness(Percentage::new(2).unwrap(), duration)
                 .await
                 .unwrap();
-            tokio::time::sleep(Duration::from_secs(60)).await;
+            tokio::time::sleep(Duration::from_millis(duration as u64)).await;
         }
     });
     StatusCode::ACCEPTED
