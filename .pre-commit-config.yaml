@@ -1,0 +1,25 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v3.2.0
+  hooks:
+    - id: trailing-whitespace
+      exclude: |
+        (?x)
+        ^LICENSE$
+    - id: end-of-file-fixer
+      exclude: |
+        (?x)
+        ^LICENSE$|
+        ^public/(js|css)/
+    - id: check-yaml
+    - id: check-added-large-files
+
+- repo: local
+  hooks:
+    - id: cargo-check
+      name: Validate the Rust code
+      language: system
+      entry: cargo check
+      pass_filenames: false
