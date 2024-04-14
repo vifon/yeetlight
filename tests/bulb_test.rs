@@ -14,14 +14,12 @@ async fn expect_command(ready: Sender<()>) -> String {
     let listener = tokio::net::TcpListener::bind(socket).await.unwrap();
     ready.send(()).unwrap();
 
-    let (connection, _) = listener.accept().await.unwrap();
+    let (mut connection, _) = listener.accept().await.unwrap();
 
-    let mut reader = BufReader::new(connection);
+    let mut reader = BufReader::new(&mut connection);
     let mut message = String::new();
     reader.read_line(&mut message).await.unwrap();
     let message = message.trim_end();
-
-    let mut connection = reader.into_inner();
 
     // An empty valid JSON.
     connection.write_all("{}".as_bytes()).await.unwrap();
