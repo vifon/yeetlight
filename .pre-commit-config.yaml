@@ -23,3 +23,8 @@ repos:
       language: system
       entry: cargo check
       pass_filenames: false
+    - id: cargo-test
+      name: Run the unittests
+      language: system
+      entry: cargo test
+      pass_filenames: false
