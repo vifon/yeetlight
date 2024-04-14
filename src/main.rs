@@ -25,7 +25,8 @@ struct PowerParams {
 async fn handler_power_on(
     Query(params): Query<PowerParams>,
 ) -> Result<Json<Value>, (StatusCode, String)> {
-    let bulb = Bulb::new(&params.bulb);
+    let bulb = Bulb::from_str(&params.bulb)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
         .set_power(true, Effect::Smooth(500))
         .await
@@ -35,7 +36,8 @@ async fn handler_power_on(
 async fn handler_power_off(
     Query(params): Query<PowerParams>,
 ) -> Result<Json<Value>, (StatusCode, String)> {
-    let bulb = Bulb::new(&params.bulb);
+    let bulb = Bulb::from_str(&params.bulb)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
         .set_power(false, Effect::Smooth(500))
         .await
@@ -45,7 +47,8 @@ async fn handler_power_off(
 async fn handler_power_toggle(
     Query(params): Query<PowerParams>,
 ) -> Result<Json<Value>, (StatusCode, String)> {
-    let bulb = Bulb::new(&params.bulb);
+    let bulb = Bulb::from_str(&params.bulb)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let props_response = bulb
         .get_props(&["power"])
         .await
@@ -63,8 +66,11 @@ async fn handler_power_toggle(
     }
 }
 
-async fn handler_morning_alarm(Query(params): Query<PowerParams>) -> StatusCode {
-    let bulb = Bulb::new(&params.bulb);
+async fn handler_morning_alarm(
+    Query(params): Query<PowerParams>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    let bulb = Bulb::from_str(&params.bulb)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     tokio::task::spawn(async move {
         bulb.set_power(true, Effect::Smooth(500)).await.unwrap();
         bulb.set_brightness(Brightness::new(Brightness::MIN).unwrap(), Effect::Sudden)
@@ -84,7 +90,7 @@ async fn handler_morning_alarm(Query(params): Query<PowerParams>) -> StatusCode 
             tokio::time::sleep(Duration::from_millis(duration as u64)).await;
         }
     });
-    StatusCode::ACCEPTED
+    Ok(StatusCode::ACCEPTED)
 }
 
 #[derive(Debug, Deserialize)]
@@ -95,7 +101,8 @@ struct BrightnessParams {
 async fn handler_brightness(
     Query(params): Query<BrightnessParams>,
 ) -> Result<Json<Value>, (StatusCode, String)> {
-    let bulb = Bulb::new(&params.bulb);
+    let bulb = Bulb::from_str(&params.bulb)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let brightness = Brightness::new(params.brightness)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
@@ -113,7 +120,8 @@ struct TemperatureParams {
 async fn handler_temperature(
     Query(params): Query<TemperatureParams>,
 ) -> Result<Json<Value>, (StatusCode, String)> {
-    let bulb = Bulb::new(&params.bulb);
+    let bulb = Bulb::from_str(&params.bulb)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let temperature = Temperature::new(params.temperature)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
@@ -131,7 +139,8 @@ struct ColorParams {
 async fn handler_color(
     Query(params): Query<ColorParams>,
 ) -> Result<Json<Value>, (StatusCode, String)> {
-    let bulb = Bulb::new(&params.bulb);
+    let bulb = Bulb::from_str(&params.bulb)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let color = Color::from_hex(&params.color)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
@@ -149,7 +158,8 @@ struct InfoParams {
 async fn handler_info(
     Query(params): Query<InfoParams>,
 ) -> Result<Json<Value>, (StatusCode, String)> {
-    let bulb = Bulb::new(&params.bulb);
+    let bulb = Bulb::from_str(&params.bulb)
+        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response: BTreeMap<&str, String> = bulb
         .get_props_map(&["power", "bright", "ct", "rgb", "color_mode"])
         .await

@@ -2,6 +2,7 @@ use log::info;
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::io;
+use std::net::{AddrParseError, IpAddr, SocketAddr};
 use tokio::io::BufReader;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
@@ -9,15 +10,23 @@ use tokio::net::TcpStream;
 use crate::command::Command;
 use crate::params::{Brightness, Color, Effect, Percentage, Temperature};
 
+const PORT: u16 = 55443;
+
 pub struct Bulb {
-    addr: String,
+    addr: SocketAddr,
 }
 
 impl Bulb {
-    pub fn new(addr: &str) -> Self {
+    pub fn new(addr: IpAddr) -> Self {
         Bulb {
-            addr: String::from(addr) + ":55443",
+            addr: SocketAddr::new(addr, PORT),
         }
+    }
+
+    pub fn from_str(addr: &str) -> Result<Self, AddrParseError> {
+        Ok(Bulb {
+            addr: SocketAddr::new(addr.parse()?, PORT),
+        })
     }
 
     async fn connect(&self) -> io::Result<TcpStream> {

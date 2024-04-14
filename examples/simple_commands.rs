@@ -6,7 +6,7 @@ use yeetlight::*;
 async fn main() -> anyhow::Result<()> {
     simple_logger::init().unwrap();
 
-    let b = Bulb::new("192.168.2.162");
+    let b = Bulb::new("192.168.2.162".parse()?);
     b.set_power(true, Effect::Smooth(500)).await?;
     sleep(Duration::from_secs(1)).await;
     b.set_brightness(Brightness::new(30)?, Effect::Smooth(500))
