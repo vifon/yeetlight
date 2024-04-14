@@ -13,3 +13,24 @@ impl From<i16> for Percentage {
         Self(value)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_within_range() {
+        let result = Percentage::new(Percentage::MAX - 1);
+        assert!(result.is_ok());
+        let result = Percentage::new(Percentage::MIN + 1);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn new_out_of_range() {
+        let result = Percentage::new(Percentage::MAX + 1);
+        assert!(result.is_err());
+        let result = Percentage::new(Percentage::MIN - 1);
+        assert!(result.is_err());
+    }
+}
