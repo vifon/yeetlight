@@ -3,6 +3,7 @@ use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::io;
 use std::net::{AddrParseError, IpAddr, SocketAddr};
+use std::str::FromStr;
 use tokio::io::BufReader;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
@@ -17,17 +18,19 @@ pub struct Bulb {
     addr: SocketAddr,
 }
 
+impl FromStr for Bulb {
+    type Err = AddrParseError;
+
+    fn from_str(addr: &str) -> Result<Self, Self::Err> {
+        Ok(Bulb::new(addr.parse()?))
+    }
+}
+
 impl Bulb {
     pub fn new(addr: IpAddr) -> Self {
         Bulb {
             addr: SocketAddr::new(addr, PORT),
         }
-    }
-
-    pub fn from_str(addr: &str) -> Result<Self, AddrParseError> {
-        Ok(Bulb {
-            addr: SocketAddr::new(addr.parse()?, PORT),
-        })
     }
 
     async fn connect(&self) -> io::Result<TcpStream> {
