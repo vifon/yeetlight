@@ -12,6 +12,7 @@ use crate::params::{Brightness, Color, Effect, Percentage, Temperature};
 
 const PORT: u16 = 55443;
 
+#[derive(Debug)]
 pub struct Bulb {
     addr: SocketAddr,
 }

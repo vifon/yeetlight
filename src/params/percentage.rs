@@ -1,6 +1,6 @@
 use super::BoundedRange;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Percentage(pub i16);
 
 impl BoundedRange<i16> for Percentage {

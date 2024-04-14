@@ -1,6 +1,6 @@
 use super::BoundedRange;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Brightness(pub u16);
 
 impl BoundedRange<u16> for Brightness {
