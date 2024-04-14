@@ -28,3 +28,8 @@ repos:
       language: system
       entry: cargo test
       pass_filenames: false
+    - id: cargo-fmt
+      name: Check the Rust code formatting
+      language: system
+      entry: cargo fmt --check
+      pass_filenames: false
