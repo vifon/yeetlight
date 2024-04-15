@@ -11,7 +11,7 @@ pub enum ColorError {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct Color(pub u32);
+pub struct Color(pub(crate) u32);
 
 impl Color {
     pub fn from_hex(hex: &str) -> Result<Color, ColorError> {

@@ -1,7 +1,7 @@
 use super::BoundedRange;
 
 #[derive(Copy, Clone, Debug)]
-pub struct Percentage(pub i16);
+pub struct Percentage(pub(crate) i16);
 
 impl BoundedRange<i16> for Percentage {
     const MIN: i16 = -100;

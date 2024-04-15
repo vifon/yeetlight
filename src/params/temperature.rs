@@ -1,7 +1,7 @@
 use super::BoundedRange;
 
 #[derive(Copy, Clone, Debug)]
-pub struct Temperature(pub u16);
+pub struct Temperature(pub(crate) u16);
 
 impl BoundedRange<u16> for Temperature {
     const MIN: u16 = 1700;

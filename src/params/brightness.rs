@@ -1,7 +1,7 @@
 use super::BoundedRange;
 
 #[derive(Copy, Clone, Debug)]
-pub struct Brightness(pub u16);
+pub struct Brightness(pub(crate) u16);
 
 impl BoundedRange<u16> for Brightness {
     const MIN: u16 = 1;
