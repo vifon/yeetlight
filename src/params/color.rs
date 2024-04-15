@@ -30,6 +30,10 @@ mod tests {
     fn from_hex() {
         let result = Color::from_hex("ff0000");
         assert!(result.is_ok());
+        let result = Color::from_hex("FF0000");
+        assert!(result.is_ok());
+        let result = Color::from_hex("fF0000");
+        assert!(result.is_ok());
 
         // In the future it might be interpretted as "ff0000".
         let result = Color::from_hex("f00");
