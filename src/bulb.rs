@@ -33,20 +33,27 @@ impl Bulb {
         }
     }
 
-    async fn connect(&self) -> io::Result<TcpStream> {
-        TcpStream::connect(&self.addr).await
+    pub async fn connect(&self) -> io::Result<BulbConnection> {
+        Ok(BulbConnection {
+            stream: TcpStream::connect(&self.addr).await?,
+        })
     }
+}
 
-    async fn call(&self, command: Command) -> io::Result<Value> {
-        let mut stream = self.connect().await?;
+#[derive(Debug)]
+pub struct BulbConnection {
+    stream: TcpStream,
+}
 
+impl BulbConnection {
+    async fn call(&mut self, command: Command) -> io::Result<Value> {
         let payload = serde_json::to_string(&command)?;
         info!("Sending: {}", payload);
         let payload = payload + "\r\n";
-        stream.write_all(payload.as_bytes()).await?;
+        self.stream.write_all(payload.as_bytes()).await?;
 
         let mut response = String::new();
-        let mut reader = BufReader::new(stream);
+        let mut reader = BufReader::new(&mut self.stream);
         reader.read_line(&mut response).await?;
         let response = response.trim_end();
 
@@ -56,7 +63,7 @@ impl Bulb {
         Ok(response)
     }
 
-    pub async fn set_power(&self, state: bool, effect: Effect) -> io::Result<Value> {
+    pub async fn set_power(&mut self, state: bool, effect: Effect) -> io::Result<Value> {
         let state = match state {
             true => "on",
             false => "off",
@@ -70,7 +77,7 @@ impl Bulb {
     }
 
     pub async fn set_brightness(
-        &self,
+        &mut self,
         Brightness(brightness): Brightness,
         effect: Effect,
     ) -> io::Result<Value> {
@@ -82,7 +89,7 @@ impl Bulb {
     }
 
     pub async fn adjust_brightness(
-        &self,
+        &mut self,
         Percentage(percentage): Percentage,
         duration: u16,
     ) -> io::Result<Value> {
@@ -91,7 +98,7 @@ impl Bulb {
     }
 
     pub async fn set_temperature(
-        &self,
+        &mut self,
         Temperature(temperature): Temperature,
         effect: Effect,
     ) -> io::Result<Value> {
@@ -102,7 +109,7 @@ impl Bulb {
         .await
     }
 
-    pub async fn set_color(&self, Color(color): Color, effect: Effect) -> io::Result<Value> {
+    pub async fn set_color(&mut self, Color(color): Color, effect: Effect) -> io::Result<Value> {
         self.call(Command::new(
             "set_rgb",
             json![[color, effect.effect(), effect.duration()]],
@@ -110,7 +117,7 @@ impl Bulb {
         .await
     }
 
-    pub async fn get_props(&self, props: &[&str]) -> io::Result<Vec<String>> {
+    pub async fn get_props(&mut self, props: &[&str]) -> io::Result<Vec<String>> {
         let response = self.call(Command::new("get_prop", json!(props))).await?;
         let values: Vec<String> = response
             .as_object()
@@ -124,7 +131,7 @@ impl Bulb {
     }
 
     pub async fn get_props_map<'a>(
-        &self,
+        &mut self,
         props: &[&'a str],
     ) -> io::Result<BTreeMap<&'a str, String>> {
         let values = self.get_props(props).await?;

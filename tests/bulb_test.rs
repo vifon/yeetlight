@@ -35,7 +35,13 @@ async fn test_power_on() {
     rx.await.unwrap();
 
     let b = Bulb::new(IP_ADDR);
-    let _response = b.set_power(true, Effect::Smooth(500)).await.unwrap();
+    let _response = b
+        .connect()
+        .await
+        .unwrap()
+        .set_power(true, Effect::Smooth(500))
+        .await
+        .unwrap();
 
     let expected = r#"{"id":1,"method":"set_power","params":["on","smooth",500]}"#;
     let message = mock_bulb.await.unwrap();

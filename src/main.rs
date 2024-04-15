@@ -28,6 +28,9 @@ async fn handler_power_on(
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
+        .connect()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .set_power(true, Effect::Smooth(500))
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -39,6 +42,9 @@ async fn handler_power_off(
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
+        .connect()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .set_power(false, Effect::Smooth(500))
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -50,6 +56,9 @@ async fn handler_power_toggle(
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let props_response = bulb
+        .connect()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .get_props(&["power"])
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -71,20 +80,30 @@ async fn handler_morning_alarm(
 ) -> Result<StatusCode, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
+    let mut connection = bulb
+        .connect()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     tokio::task::spawn(async move {
-        bulb.set_power(true, Effect::Smooth(500)).await.unwrap();
-        bulb.set_brightness(Brightness::new(Brightness::MIN).unwrap(), Effect::Sudden)
+        connection
+            .set_power(true, Effect::Smooth(500))
             .await
             .unwrap();
-        bulb.set_temperature(Temperature::new(Temperature::MAX).unwrap(), Effect::Sudden)
+        connection
+            .set_brightness(Brightness::new(Brightness::MIN).unwrap(), Effect::Sudden)
+            .await
+            .unwrap();
+        connection
+            .set_temperature(Temperature::new(Temperature::MAX).unwrap(), Effect::Sudden)
             .await
             .unwrap();
         for _ in 0..50 {
-            if bulb.get_props(&["power"]).await.unwrap()[0].as_str() != "on" {
+            if connection.get_props(&["power"]).await.unwrap()[0].as_str() != "on" {
                 break;
             }
             let duration = 60_000;
-            bulb.adjust_brightness(Percentage::new(2).unwrap(), duration)
+            connection
+                .adjust_brightness(Percentage::new(2).unwrap(), duration)
                 .await
                 .unwrap();
             tokio::time::sleep(Duration::from_millis(duration as u64)).await;
@@ -106,6 +125,9 @@ async fn handler_brightness(
     let brightness = Brightness::new(params.brightness)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
+        .connect()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .set_brightness(brightness, Effect::Smooth(500))
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -125,6 +147,9 @@ async fn handler_temperature(
     let temperature = Temperature::new(params.temperature)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
+        .connect()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .set_temperature(temperature, Effect::Smooth(500))
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -144,6 +169,9 @@ async fn handler_color(
     let color = Color::from_hex(&params.color)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
+        .connect()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .set_color(color, Effect::Smooth(500))
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -161,6 +189,9 @@ async fn handler_info(
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response: BTreeMap<&str, String> = bulb
+        .connect()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .get_props_map(&["power", "bright", "ct", "rgb", "color_mode"])
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
