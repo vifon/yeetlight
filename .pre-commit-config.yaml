@@ -21,7 +21,7 @@ repos:
     - id: cargo-check
       name: Validate the Rust code
       language: system
-      entry: cargo check
+      entry: cargo check --all-targets
       pass_filenames: false
     - id: cargo-test
       name: Run the unittests
