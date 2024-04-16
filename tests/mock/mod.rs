@@ -16,7 +16,7 @@ pub struct BulbConnection {
 }
 
 impl BulbConnection {
-    async fn new(connection: TcpStream) -> io::Result<Self> {
+    fn new(connection: TcpStream) -> io::Result<Self> {
         Ok(Self {
             connection,
             last_command_id: 0,
@@ -65,6 +65,6 @@ impl BulbListener {
 
     pub async fn accept(&self) -> io::Result<BulbConnection> {
         let (connection, _) = self.listener.accept().await?;
-        BulbConnection::new(connection).await
+        BulbConnection::new(connection)
     }
 }

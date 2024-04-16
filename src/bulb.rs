@@ -2,6 +2,7 @@ use log::info;
 use std::io;
 use std::net::{AddrParseError, IpAddr, SocketAddr};
 use std::str::FromStr;
+use tokio::net::TcpStream;
 
 use crate::BulbConnection;
 
@@ -29,7 +30,7 @@ impl Bulb {
 
     pub async fn connect(&self) -> io::Result<BulbConnection> {
         info!("Connecting to: {}", self.addr);
-        let connection = BulbConnection::new(&self.addr).await?;
+        let connection = BulbConnection::new(TcpStream::connect(&self.addr).await?)?;
         info!("Connected to: {}", self.addr);
         Ok(connection)
     }

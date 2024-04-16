@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
 use std::io;
-use std::net::SocketAddr;
 use tokio::io::BufReader;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
@@ -31,9 +30,9 @@ pub struct BulbConnection {
 }
 
 impl BulbConnection {
-    pub(crate) async fn new(addr: &SocketAddr) -> io::Result<Self> {
+    pub fn new(stream: TcpStream) -> io::Result<Self> {
         Ok(Self {
-            stream: TcpStream::connect(addr).await?,
+            stream,
             last_command_id: 0,
         })
     }
