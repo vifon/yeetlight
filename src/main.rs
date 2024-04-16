@@ -85,29 +85,24 @@ async fn handler_morning_alarm(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     tokio::task::spawn(async move {
+        connection.set_power(true, Effect::Smooth(500)).await?;
         connection
-            .set_power(true, Effect::Smooth(500))
-            .await
-            .unwrap();
+            .set_brightness(Brightness::new(Brightness::MIN)?, Effect::Sudden)
+            .await?;
         connection
-            .set_brightness(Brightness::new(Brightness::MIN).unwrap(), Effect::Sudden)
-            .await
-            .unwrap();
-        connection
-            .set_temperature(Temperature::new(Temperature::MAX).unwrap(), Effect::Sudden)
-            .await
-            .unwrap();
+            .set_temperature(Temperature::new(Temperature::MAX)?, Effect::Sudden)
+            .await?;
         for _ in 0..50 {
-            if connection.get_props(&["power"]).await.unwrap()[0].as_str() != "on" {
+            if connection.get_props(&["power"]).await?[0].as_str() != "on" {
                 break;
             }
             let duration = 60_000;
             connection
-                .adjust_brightness(Percentage::new(2).unwrap(), duration)
-                .await
-                .unwrap();
+                .adjust_brightness(Percentage::new(2)?, duration)
+                .await?;
             tokio::time::sleep(Duration::from_millis(duration as u64)).await;
         }
+        Ok::<(), anyhow::Error>(())
     });
     Ok(StatusCode::ACCEPTED)
 }
