@@ -152,7 +152,7 @@ impl BulbConnection {
     }
 
     pub async fn get_props(&mut self, props: &[&str]) -> io::Result<Vec<String>> {
-        let props = props.iter().copied().map(Value::from).collect();
+        let props = props.iter().map(|x| Value::from(*x)).collect();
         let command = self.new_command("get_prop", props);
         let response = self.call(command).await?;
         let values: Vec<String> = response
