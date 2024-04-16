@@ -1,50 +1,28 @@
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use tokio::io::BufReader;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
-use tokio::sync::oneshot::{self, Sender};
+use tokio::try_join;
 
 use yeetlight::*;
 
-const PORT: u16 = 55443;
-const IP_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-const SOCKET_ADDR: SocketAddr = SocketAddr::new(IP_ADDR, PORT);
-
-async fn expect_command(ready: Sender<()>) -> String {
-    let socket = SOCKET_ADDR;
-    let listener = tokio::net::TcpListener::bind(socket).await.unwrap();
-    ready.send(()).unwrap();
-
-    let (mut connection, _) = listener.accept().await.unwrap();
-
-    let mut reader = BufReader::new(&mut connection);
-    let mut message = String::new();
-    reader.read_line(&mut message).await.unwrap();
-    let message = message.trim_end();
-
-    // An empty valid JSON.
-    connection.write_all("{}".as_bytes()).await.unwrap();
-
-    message.to_owned()
-}
+mod mock;
 
 #[tokio::test]
-async fn test_power_on() {
-    let (tx, rx) = oneshot::channel();
+async fn test_power() {
+    let mock_listener = mock::BulbListener::serve().await.unwrap();
 
-    let mock_bulb = tokio::task::spawn(expect_command(tx));
-    rx.await.unwrap();
+    let bulb = Bulb::new(mock_listener.addr.ip());
+    let mock_connection = mock_listener.accept();
+    let bulb_connection = bulb.connect();
+    let (mut mock_connection, mut bulb_connection) =
+        try_join!(mock_connection, bulb_connection).unwrap();
 
-    let b = Bulb::new(IP_ADDR);
-    let _response = b
-        .connect()
-        .await
-        .unwrap()
-        .set_power(true, Effect::Smooth(500))
-        .await
-        .unwrap();
+    let response = bulb_connection.set_power(true, Effect::Smooth(400));
+    let expected = r#"{"id":1,"method":"set_power","params":["on","smooth",400]}"#;
+    let message = mock_connection.receive();
+    let (message, _response) = try_join!(message, response).unwrap();
+    assert_eq!(message, expected);
 
-    let expected = r#"{"id":1,"method":"set_power","params":["on","smooth",500]}"#;
-    let message = mock_bulb.await.unwrap();
-
+    let response = bulb_connection.set_power(false, Effect::Sudden);
+    let expected = r#"{"id":1,"method":"set_power","params":["off","sudden",0]}"#;
+    let message = mock_connection.receive();
+    let (message, _response) = try_join!(message, response).unwrap();
     assert_eq!(message, expected);
 }
