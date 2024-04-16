@@ -38,12 +38,12 @@ impl BulbConnection {
         })
     }
 
-    fn new_command(&mut self, method: &str, params: Box<[Value]>) -> Command {
+    fn new_command(&mut self, method: &str, params: Vec<Value>) -> Command {
         self.last_command_id += 1;
         Command {
             id: self.last_command_id,
             method: method.to_owned(),
-            params: params.into_vec(),
+            params,
         }
     }
 
@@ -85,11 +85,11 @@ impl BulbConnection {
 
         let command = self.new_command(
             "set_power",
-            Box::new([
+            vec![
                 state.into(),
                 effect.effect().into(),
                 effect.duration().into(),
-            ]),
+            ],
         );
 
         self.call(command).await
@@ -102,11 +102,11 @@ impl BulbConnection {
     ) -> io::Result<Response> {
         let command = self.new_command(
             "set_bright",
-            Box::new([
+            vec![
                 brightness.into(),
                 effect.effect().into(),
                 effect.duration().into(),
-            ]),
+            ],
         );
         self.call(command).await
     }
@@ -116,10 +116,7 @@ impl BulbConnection {
         Percentage(percentage): Percentage,
         duration: u16,
     ) -> io::Result<Response> {
-        let command = self.new_command(
-            "adjust_bright",
-            Box::new([percentage.into(), duration.into()]),
-        );
+        let command = self.new_command("adjust_bright", vec![percentage.into(), duration.into()]);
         self.call(command).await
     }
 
@@ -130,11 +127,11 @@ impl BulbConnection {
     ) -> io::Result<Response> {
         let command = self.new_command(
             "set_ct_abx",
-            Box::new([
+            vec![
                 temperature.into(),
                 effect.effect().into(),
                 effect.duration().into(),
-            ]),
+            ],
         );
         self.call(command).await
     }
@@ -142,11 +139,11 @@ impl BulbConnection {
     pub async fn set_color(&mut self, Color(color): Color, effect: Effect) -> io::Result<Response> {
         let command = self.new_command(
             "set_rgb",
-            Box::new([
+            vec![
                 color.into(),
                 effect.effect().into(),
                 effect.duration().into(),
-            ]),
+            ],
         );
         self.call(command).await
     }
