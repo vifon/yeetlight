@@ -1,6 +1,6 @@
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value};
 use std::collections::BTreeMap;
 use std::io;
 use std::net::SocketAddr;
@@ -14,7 +14,7 @@ use crate::params::{Brightness, Color, Effect, Percentage, Temperature};
 pub struct Command {
     pub id: u16,
     pub method: String,
-    pub params: Value,
+    pub params: Vec<Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -38,12 +38,12 @@ impl BulbConnection {
         })
     }
 
-    fn new_command(&mut self, method: &str, params: Value) -> Command {
+    fn new_command(&mut self, method: &str, params: Box<[Value]>) -> Command {
         self.last_command_id += 1;
         Command {
             id: self.last_command_id,
             method: method.to_owned(),
-            params,
+            params: params.into_vec(),
         }
     }
 
@@ -85,7 +85,11 @@ impl BulbConnection {
 
         let command = self.new_command(
             "set_power",
-            json![[state, effect.effect(), effect.duration()]],
+            Box::new([
+                state.into(),
+                effect.effect().into(),
+                effect.duration().into(),
+            ]),
         );
 
         self.call(command).await
@@ -98,7 +102,11 @@ impl BulbConnection {
     ) -> io::Result<Response> {
         let command = self.new_command(
             "set_bright",
-            json![[brightness, effect.effect(), effect.duration()]],
+            Box::new([
+                brightness.into(),
+                effect.effect().into(),
+                effect.duration().into(),
+            ]),
         );
         self.call(command).await
     }
@@ -108,7 +116,10 @@ impl BulbConnection {
         Percentage(percentage): Percentage,
         duration: u16,
     ) -> io::Result<Response> {
-        let command = self.new_command("adjust_bright", json![[percentage, duration]]);
+        let command = self.new_command(
+            "adjust_bright",
+            Box::new([percentage.into(), duration.into()]),
+        );
         self.call(command).await
     }
 
@@ -119,7 +130,11 @@ impl BulbConnection {
     ) -> io::Result<Response> {
         let command = self.new_command(
             "set_ct_abx",
-            json![[temperature, effect.effect(), effect.duration()]],
+            Box::new([
+                temperature.into(),
+                effect.effect().into(),
+                effect.duration().into(),
+            ]),
         );
         self.call(command).await
     }
@@ -127,13 +142,18 @@ impl BulbConnection {
     pub async fn set_color(&mut self, Color(color): Color, effect: Effect) -> io::Result<Response> {
         let command = self.new_command(
             "set_rgb",
-            json![[color, effect.effect(), effect.duration()]],
+            Box::new([
+                color.into(),
+                effect.effect().into(),
+                effect.duration().into(),
+            ]),
         );
         self.call(command).await
     }
 
     pub async fn get_props(&mut self, props: &[&str]) -> io::Result<Vec<String>> {
-        let command = self.new_command("get_prop", json!(props));
+        let props = props.into_iter().copied().map(Value::from).collect();
+        let command = self.new_command("get_prop", props);
         let response = self.call(command).await?;
         let values: Vec<String> = response
             .result
