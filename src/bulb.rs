@@ -1,3 +1,4 @@
+use log::info;
 use std::io;
 use std::net::{AddrParseError, IpAddr, SocketAddr};
 use std::str::FromStr;
@@ -28,8 +29,11 @@ impl Bulb {
     }
 
     pub async fn connect(&self) -> io::Result<BulbConnection> {
-        Ok(BulbConnection {
+        info!("Connecting to: {}", self.addr);
+        let connection = BulbConnection {
             stream: TcpStream::connect(&self.addr).await?,
-        })
+        };
+        info!("Connected to: {}", self.addr);
+        Ok(connection)
     }
 }

@@ -24,7 +24,7 @@ struct PowerParams {
 
 async fn handler_power_on(
     Query(params): Query<PowerParams>,
-) -> Result<Json<Value>, (StatusCode, String)> {
+) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
@@ -38,7 +38,7 @@ async fn handler_power_on(
 }
 async fn handler_power_off(
     Query(params): Query<PowerParams>,
-) -> Result<Json<Value>, (StatusCode, String)> {
+) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let response = bulb
@@ -52,7 +52,7 @@ async fn handler_power_off(
 }
 async fn handler_power_toggle(
     Query(params): Query<PowerParams>,
-) -> Result<Json<Value>, (StatusCode, String)> {
+) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let props_response = bulb
@@ -114,7 +114,7 @@ struct BrightnessParams {
 }
 async fn handler_brightness(
     Query(params): Query<BrightnessParams>,
-) -> Result<Json<Value>, (StatusCode, String)> {
+) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let brightness = Brightness::new(params.brightness)
@@ -136,7 +136,7 @@ struct TemperatureParams {
 }
 async fn handler_temperature(
     Query(params): Query<TemperatureParams>,
-) -> Result<Json<Value>, (StatusCode, String)> {
+) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let temperature = Temperature::new(params.temperature)
@@ -158,7 +158,7 @@ struct ColorParams {
 }
 async fn handler_color(
     Query(params): Query<ColorParams>,
-) -> Result<Json<Value>, (StatusCode, String)> {
+) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
     let color = Color::from_hex(&params.color)

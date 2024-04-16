@@ -1,6 +1,6 @@
 pub mod bulb;
 pub mod bulb_connection;
-mod command;
+pub mod command;
 pub mod params;
 
 pub use bulb::*;
