@@ -1,6 +1,6 @@
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 use std::collections::BTreeMap;
 use std::io;
 use std::net::SocketAddr;
@@ -20,8 +20,8 @@ pub struct Command {
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Response {
     pub id: u16,
-    pub result: Option<Value>,
-    pub error: Option<Value>,
+    pub result: Option<Vec<Value>>,
+    pub error: Option<Map<String, Value>>,
 }
 
 #[derive(Debug)]
@@ -138,8 +138,6 @@ impl BulbConnection {
         let values: Vec<String> = response
             .result
             .expect("No results in the response")
-            .as_array()
-            .expect("Results are not an array")
             .iter()
             .map(|x| x.as_str().expect("Got an invalid prop value").to_owned())
             .collect();
