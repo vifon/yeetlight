@@ -1,12 +1,8 @@
 use std::io;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, SocketAddr};
 use tokio::io::BufReader;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
-
-const PORT: u16 = 55443;
-const IP_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-const SOCKET_ADDR: SocketAddr = SocketAddr::new(IP_ADDR, PORT);
 
 use yeetlight::Response;
 
@@ -54,13 +50,10 @@ pub struct BulbListener {
 }
 
 impl BulbListener {
-    pub async fn serve() -> io::Result<Self> {
-        let socket = SOCKET_ADDR;
-        let listener = tokio::net::TcpListener::bind(socket).await?;
-        Ok(BulbListener {
-            listener,
-            addr: socket,
-        })
+    pub async fn serve(ip_addr: IpAddr) -> io::Result<Self> {
+        let addr = SocketAddr::new(ip_addr, yeetlight::bulb::PORT);
+        let listener = tokio::net::TcpListener::bind(addr).await?;
+        Ok(BulbListener { listener, addr })
     }
 
     pub async fn accept(&self) -> io::Result<BulbConnection> {

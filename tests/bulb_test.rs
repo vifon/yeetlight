@@ -6,9 +6,11 @@ mod mock;
 
 #[tokio::test]
 async fn test_power() {
-    simple_logger::init().unwrap();
+    let _ = simple_logger::init();
 
-    let mock_listener = mock::BulbListener::serve().await.unwrap();
+    let mock_listener = mock::BulbListener::serve("127.0.0.1".parse().unwrap())
+        .await
+        .unwrap();
 
     let bulb = Bulb::new(mock_listener.addr.ip());
     let mock_connection = mock_listener.accept();

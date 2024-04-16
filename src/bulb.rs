@@ -6,7 +6,7 @@ use tokio::net::TcpStream;
 
 use crate::BulbConnection;
 
-const PORT: u16 = 55443;
+pub const PORT: u16 = 55443;
 
 #[derive(Debug)]
 pub struct Bulb {
