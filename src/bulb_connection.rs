@@ -19,7 +19,9 @@ pub struct Command {
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Response {
     pub id: u16,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub result: Option<Vec<Value>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<Map<String, Value>>,
 }
 
