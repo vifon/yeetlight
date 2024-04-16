@@ -23,7 +23,7 @@ async fn test_power() {
     assert_eq!(message, expected);
 
     let response = bulb_connection.set_power(false, Effect::Sudden);
-    let expected = r#"{"id":1,"method":"set_power","params":["off","sudden",0]}"#;
+    let expected = r#"{"id":2,"method":"set_power","params":["off","sudden",0]}"#;
     let message = mock_connection.receive();
     let (message, _response) = try_join!(message, response).unwrap();
     assert_eq!(message, expected);

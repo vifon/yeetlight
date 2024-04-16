@@ -8,40 +8,43 @@ const PORT: u16 = 55443;
 const IP_ADDR: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const SOCKET_ADDR: SocketAddr = SocketAddr::new(IP_ADDR, PORT);
 
-use yeetlight::command::Command;
 use yeetlight::Response;
 
 pub struct BulbConnection {
     connection: TcpStream,
+    last_command_id: u16,
 }
 
 impl BulbConnection {
+    async fn new(connection: TcpStream) -> io::Result<Self> {
+        Ok(Self {
+            connection,
+            last_command_id: 0,
+        })
+    }
+
     pub async fn receive(&mut self) -> io::Result<String> {
         self.receive_and_respond(Response::default()).await
     }
-    pub async fn receive_and_respond(&mut self, mut response: Response) -> io::Result<String> {
+
+    pub async fn receive_and_respond(&mut self, response: Response) -> io::Result<String> {
         let mut reader = BufReader::new(&mut self.connection);
         let mut message = String::new();
         reader.read_line(&mut message).await?;
         let message = message.trim_end();
 
-        match serde_json::from_str::<Command>(message) {
-            Ok(command) => {
-                // Assume this is the message for us.
-                response.id = command.id;
+        self.last_command_id += 1;
+        let response = Response {
+            id: self.last_command_id,
+            ..response
+        };
 
-                let payload = serde_json::to_string(&response)?;
-                let payload = payload + "\r\n";
+        let payload = serde_json::to_string(&response)?;
+        let payload = payload + "\r\n";
 
-                self.connection.write_all(payload.as_bytes()).await?;
+        self.connection.write_all(payload.as_bytes()).await?;
 
-                // Always return with id:1 for predictable test outputs.
-                let message = serde_json::to_string(&Command { id: 1, ..command })?;
-                Ok(message.to_owned())
-            }
-            // Not a Command?  That's okay, let the caller inspect the contents.
-            Err(_) => Ok(message.to_owned()),
-        }
+        Ok(message.to_owned())
     }
 }
 
@@ -62,6 +65,6 @@ impl BulbListener {
 
     pub async fn accept(&self) -> io::Result<BulbConnection> {
         let (connection, _) = self.listener.accept().await?;
-        Ok(BulbConnection { connection })
+        BulbConnection::new(connection).await
     }
 }
