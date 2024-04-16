@@ -26,7 +26,7 @@ repos:
     - id: cargo-test
       name: Run the unittests
       language: system
-      entry: cargo test
+      entry: timeout --verbose 1m cargo test
       pass_filenames: false
     - id: cargo-fmt
       name: Check the Rust code formatting
