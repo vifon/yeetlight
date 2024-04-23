@@ -9,7 +9,8 @@ use axum::{
 };
 use axum_embed::ServeEmbed;
 use clap::Parser;
-use log::info;
+use futures::future::TryFutureExt;
+use log::{info, warn};
 use rust_embed::RustEmbed;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -84,7 +85,7 @@ async fn handler_morning_alarm(
         .connect()
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    tokio::task::spawn(async move {
+    let timer = async move {
         connection.set_power(true, Effect::Smooth(500)).await?;
         connection
             .set_brightness(Brightness::new(Brightness::MIN)?, Effect::Sudden)
@@ -94,7 +95,7 @@ async fn handler_morning_alarm(
             .await?;
         for _ in 0..50 {
             if connection.get_props(&["power"]).await?[0].as_str() != "on" {
-                break;
+                anyhow::bail!("Bulb turned off early");
             }
             let duration = 60_000;
             connection
@@ -103,7 +104,12 @@ async fn handler_morning_alarm(
             tokio::time::sleep(Duration::from_millis(duration as u64)).await;
         }
         Ok::<(), anyhow::Error>(())
+    }
+    .or_else(|e| async {
+        warn!("Timer aborted: {e}");
+        anyhow::Result::Err(e)
     });
+    tokio::task::spawn(timer);
     Ok(StatusCode::ACCEPTED)
 }
 
