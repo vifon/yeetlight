@@ -1,6 +1,8 @@
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::{collections::BTreeMap, str::FromStr};
 
+use axum::extract::State;
 use axum::{extract::Query, http::StatusCode, response::Json};
 use futures::future::TryFutureExt;
 use log::warn;
@@ -9,6 +11,31 @@ use serde_json::{json, Value};
 
 use yeetlight::*;
 
+#[derive(Debug, Default, Clone)]
+pub struct AppState {
+    startup_state: Arc<Mutex<Option<(Brightness, Temperature)>>>,
+}
+
+impl AppState {
+    #[allow(dead_code)]
+    fn get_startup_state(self) -> Option<(Brightness, Temperature)> {
+        *self.startup_state.lock().unwrap()
+    }
+    fn set_startup_state(self, value: Option<(Brightness, Temperature)>) {
+        *self.startup_state.lock().unwrap() = value;
+    }
+
+    fn swap_startup_state(
+        self,
+        value: Option<(Brightness, Temperature)>,
+    ) -> Option<(Brightness, Temperature)> {
+        let mut state = self.startup_state.lock().unwrap();
+        let old_state = state.clone();
+        *state = value;
+        old_state
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct PowerParams {
     bulb: String,
@@ -16,16 +43,36 @@ pub struct PowerParams {
 
 pub async fn power_on(
     Query(params): Query<PowerParams>,
+    State(state): State<AppState>,
 ) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let response = bulb
+    let mut connection = bulb
         .connect()
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let response = connection
         .set_power(true, Effect::Smooth(500))
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if let Some((brightness, temperature)) = state.clone().swap_startup_state(None) {
+        let _ = connection
+            .set_brightness(brightness, Effect::Sudden)
+            .await
+            .map_err(|e| {
+                warn!("Failed to set brightness: {e}");
+                e
+            });
+        let _ = connection
+            .set_temperature(temperature, Effect::Sudden)
+            .await
+            .map_err(|e| {
+                warn!("Failed to set temperature: {e}");
+                e
+            });
+    };
+
     Ok(Json(response))
 }
 pub async fn power_off(
@@ -44,6 +91,7 @@ pub async fn power_off(
 }
 pub async fn power_toggle(
     Query(params): Query<PowerParams>,
+    State(state): State<AppState>,
 ) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
@@ -59,7 +107,7 @@ pub async fn power_toggle(
         .expect("Got a response but with no expected value");
     match power_state.as_str() {
         "on" => power_off(Query(params)).await,
-        "off" => power_on(Query(params)).await,
+        "off" => power_on(Query(params), State(state)).await,
         _ => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Unexpected light state: {power_state}"),
@@ -69,6 +117,7 @@ pub async fn power_toggle(
 
 pub async fn morning_alarm(
     Query(params): Query<PowerParams>,
+    State(state): State<AppState>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
@@ -78,6 +127,12 @@ pub async fn morning_alarm(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     let timer = async move {
         connection.set_power(true, Effect::Smooth(500)).await?;
+
+        let props = connection.get_props(&["bright", "ct"]).await?;
+        let brightness: Brightness = props[0].parse::<u16>().unwrap().into();
+        let temperature: Temperature = props[1].parse::<u16>().unwrap().into();
+        state.set_startup_state(Some((brightness, temperature)));
+
         connection
             .set_brightness(Brightness::new(Brightness::MIN)?, Effect::Sudden)
             .await?;

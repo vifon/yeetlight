@@ -30,6 +30,8 @@ fn config_routes(config: &Option<Value>) -> Router {
 }
 
 fn bulb_v1_routes() -> Router {
+    let state = handlers::AppState::default();
+
     Router::new()
         .route("/on", post(handlers::power_on))
         .route("/off", post(handlers::power_off))
@@ -39,6 +41,7 @@ fn bulb_v1_routes() -> Router {
         .route("/color", post(handlers::color))
         .route("/info", get(handlers::get_info))
         .route("/alarm", post(handlers::morning_alarm))
+        .with_state(state)
 }
 
 fn bulb_v2_routes() -> Router {
