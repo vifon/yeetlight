@@ -38,6 +38,7 @@ fn bulb_v1_routes() -> Router {
         .route("/temperature", post(handlers::temperature))
         .route("/color", post(handlers::color))
         .route("/info", get(handlers::get_info))
+        .route("/alarm", post(handlers::morning_alarm))
 }
 
 fn bulb_v2_routes() -> Router {
