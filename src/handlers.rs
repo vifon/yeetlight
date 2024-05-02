@@ -5,15 +5,17 @@ use std::{collections::BTreeMap, str::FromStr};
 use axum::extract::State;
 use axum::{extract::Query, http::StatusCode, response::Json};
 use futures::future::TryFutureExt;
-use log::warn;
+use log::{info, warn};
 use serde::Deserialize;
 use serde_json::{json, Value};
+use tokio::task::AbortHandle;
 
 use yeetlight::*;
 
 #[derive(Debug, Default, Clone)]
 pub struct AppState {
     startup_state: Arc<Mutex<Option<(Brightness, Temperature)>>>,
+    alarm_task: Arc<Mutex<Option<AbortHandle>>>,
 }
 
 impl AppState {
@@ -33,6 +35,18 @@ impl AppState {
         let old_state = state.clone();
         *state = value;
         old_state
+    }
+
+    fn abort_alarm_task(self) {
+        self.replace_alarm_task(None)
+    }
+    fn replace_alarm_task(self, handle: Option<AbortHandle>) {
+        let mut lock = self.alarm_task.lock().unwrap();
+        if let Some(ref handle) = *lock {
+            handle.abort();
+        };
+        info!("Replacing the alarm task with: {handle:?}");
+        *lock = handle;
     }
 }
 
@@ -77,6 +91,7 @@ pub async fn power_on(
 }
 pub async fn power_off(
     Query(params): Query<PowerParams>,
+    State(state): State<AppState>,
 ) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
@@ -87,6 +102,9 @@ pub async fn power_off(
         .set_power(false, Effect::Smooth(500))
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    state.abort_alarm_task();
+
     Ok(Json(response))
 }
 pub async fn power_toggle(
@@ -106,7 +124,7 @@ pub async fn power_toggle(
         .first()
         .expect("Got a response but with no expected value");
     match power_state.as_str() {
-        "on" => power_off(Query(params)).await,
+        "on" => power_off(Query(params), State(state)).await,
         "off" => power_on(Query(params), State(state)).await,
         _ => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -125,13 +143,15 @@ pub async fn morning_alarm(
         .connect()
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let state_clone = state.clone();
     let timer = async move {
         connection.set_power(true, Effect::Smooth(500)).await?;
 
         let props = connection.get_props(&["bright", "ct"]).await?;
         let brightness: Brightness = props[0].parse::<u16>().unwrap().into();
         let temperature: Temperature = props[1].parse::<u16>().unwrap().into();
-        state.set_startup_state(Some((brightness, temperature)));
+        state_clone.set_startup_state(Some((brightness, temperature)));
 
         connection
             .set_brightness(Brightness::new(Brightness::MIN)?, Effect::Sudden)
@@ -155,7 +175,10 @@ pub async fn morning_alarm(
         warn!("Timer aborted: {e}");
         anyhow::Result::Err(e)
     });
-    tokio::task::spawn(timer);
+
+    let handle = tokio::task::spawn(timer);
+    state.replace_alarm_task(Some(handle.abort_handle()));
+
     Ok(StatusCode::ACCEPTED)
 }
 
