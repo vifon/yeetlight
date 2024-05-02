@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, env, net::SocketAddr, str::FromStr, time::Duration};
+use std::{collections::BTreeMap, env, net::SocketAddr, str::FromStr};
 
 use axum::{
     extract::{Query, State},
@@ -9,8 +9,7 @@ use axum::{
 };
 use axum_embed::ServeEmbed;
 use clap::Parser;
-use futures::future::TryFutureExt;
-use log::{info, warn};
+use log::info;
 use rust_embed::RustEmbed;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -74,43 +73,6 @@ async fn handler_power_toggle(
             format!("Unexpected light state: {power_state}"),
         )),
     }
-}
-
-async fn handler_morning_alarm(
-    Query(params): Query<PowerParams>,
-) -> Result<StatusCode, (StatusCode, String)> {
-    let bulb = Bulb::from_str(&params.bulb)
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let mut connection = bulb
-        .connect()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    let timer = async move {
-        connection.set_power(true, Effect::Smooth(500)).await?;
-        connection
-            .set_brightness(Brightness::new(Brightness::MIN)?, Effect::Sudden)
-            .await?;
-        connection
-            .set_temperature(Temperature::new(Temperature::MAX)?, Effect::Sudden)
-            .await?;
-        for _ in 0..50 {
-            if connection.get_props(&["power"]).await?[0].as_str() != "on" {
-                anyhow::bail!("Bulb turned off early");
-            }
-            let duration = 60_000;
-            connection
-                .adjust_brightness(Percentage::new(2)?, duration)
-                .await?;
-            tokio::time::sleep(Duration::from_millis(duration as u64)).await;
-        }
-        Ok::<(), anyhow::Error>(())
-    }
-    .or_else(|e| async {
-        warn!("Timer aborted: {e}");
-        anyhow::Result::Err(e)
-    });
-    tokio::task::spawn(timer);
-    Ok(StatusCode::ACCEPTED)
 }
 
 #[derive(Debug, Deserialize)]
@@ -222,7 +184,6 @@ fn bulb_v1_routes() -> Router {
         .route("/temperature", post(handler_temperature))
         .route("/color", post(handler_color))
         .route("/info", get(handler_info))
-        .route("/alarm", post(handler_morning_alarm))
 }
 
 fn bulb_v2_routes() -> Router {
