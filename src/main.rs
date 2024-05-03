@@ -1,8 +1,7 @@
-use std::{collections::BTreeMap, env, net::SocketAddr, str::FromStr};
+use std::{env, net::SocketAddr};
 
 use axum::{
-    extract::{Query, State},
-    http::StatusCode,
+    extract::State,
     response::Json,
     routing::{get, post},
     Router,
@@ -11,155 +10,10 @@ use axum_embed::ServeEmbed;
 use clap::Parser;
 use log::info;
 use rust_embed::RustEmbed;
-use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::Value;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 
-use yeetlight::*;
-
-#[derive(Debug, Deserialize)]
-struct PowerParams {
-    bulb: String,
-}
-
-async fn handler_power_on(
-    Query(params): Query<PowerParams>,
-) -> Result<Json<Response>, (StatusCode, String)> {
-    let bulb = Bulb::from_str(&params.bulb)
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let response = bulb
-        .connect()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .set_power(true, Effect::Smooth(500))
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    Ok(Json(response))
-}
-async fn handler_power_off(
-    Query(params): Query<PowerParams>,
-) -> Result<Json<Response>, (StatusCode, String)> {
-    let bulb = Bulb::from_str(&params.bulb)
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let response = bulb
-        .connect()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .set_power(false, Effect::Smooth(500))
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    Ok(Json(response))
-}
-async fn handler_power_toggle(
-    Query(params): Query<PowerParams>,
-) -> Result<Json<Response>, (StatusCode, String)> {
-    let bulb = Bulb::from_str(&params.bulb)
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let props_response = bulb
-        .connect()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .get_props(&["power"])
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    let power_state = props_response
-        .first()
-        .expect("Got a response but with no expected value");
-    match power_state.as_str() {
-        "on" => handler_power_off(Query(params)).await,
-        "off" => handler_power_on(Query(params)).await,
-        _ => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Unexpected light state: {power_state}"),
-        )),
-    }
-}
-
-#[derive(Debug, Deserialize)]
-struct BrightnessParams {
-    bulb: String,
-    brightness: u16,
-}
-async fn handler_brightness(
-    Query(params): Query<BrightnessParams>,
-) -> Result<Json<Response>, (StatusCode, String)> {
-    let bulb = Bulb::from_str(&params.bulb)
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let brightness = Brightness::new(params.brightness)
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let response = bulb
-        .connect()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .set_brightness(brightness, Effect::Smooth(500))
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    Ok(Json(response))
-}
-
-#[derive(Debug, Deserialize)]
-struct TemperatureParams {
-    bulb: String,
-    temperature: u16,
-}
-async fn handler_temperature(
-    Query(params): Query<TemperatureParams>,
-) -> Result<Json<Response>, (StatusCode, String)> {
-    let bulb = Bulb::from_str(&params.bulb)
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let temperature = Temperature::new(params.temperature)
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let response = bulb
-        .connect()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .set_temperature(temperature, Effect::Smooth(500))
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    Ok(Json(response))
-}
-
-#[derive(Debug, Deserialize)]
-struct ColorParams {
-    bulb: String,
-    color: String,
-}
-async fn handler_color(
-    Query(params): Query<ColorParams>,
-) -> Result<Json<Response>, (StatusCode, String)> {
-    let bulb = Bulb::from_str(&params.bulb)
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let color = Color::from_hex(&params.color)
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let response = bulb
-        .connect()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .set_color(color, Effect::Smooth(500))
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    Ok(Json(response))
-}
-
-#[derive(Debug, Deserialize)]
-struct InfoParams {
-    bulb: String,
-}
-
-async fn handler_info(
-    Query(params): Query<InfoParams>,
-) -> Result<Json<Value>, (StatusCode, String)> {
-    let bulb = Bulb::from_str(&params.bulb)
-        .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let response: BTreeMap<&str, String> = bulb
-        .connect()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .get_props_map(&["power", "bright", "ct", "rgb", "color_mode"])
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    Ok(Json(json!(response)))
-}
+mod handlers;
 
 fn config_routes(config: &Option<Value>) -> Router {
     async fn handler_config(State(config): State<Value>) -> Json<Value> {
@@ -177,19 +31,19 @@ fn config_routes(config: &Option<Value>) -> Router {
 
 fn bulb_v1_routes() -> Router {
     Router::new()
-        .route("/on", post(handler_power_on))
-        .route("/off", post(handler_power_off))
-        .route("/toggle", post(handler_power_toggle))
-        .route("/brightness", post(handler_brightness))
-        .route("/temperature", post(handler_temperature))
-        .route("/color", post(handler_color))
-        .route("/info", get(handler_info))
+        .route("/on", post(handlers::power_on))
+        .route("/off", post(handlers::power_off))
+        .route("/toggle", post(handlers::power_toggle))
+        .route("/brightness", post(handlers::brightness))
+        .route("/temperature", post(handlers::temperature))
+        .route("/color", post(handlers::color))
+        .route("/info", get(handlers::get_info))
 }
 
 fn bulb_v2_routes() -> Router {
     Router::new()
-    // .route("/on", get(handler_power_on))
-    // .route("/off", get(handler_power_off))
+    // .route("/on", get(handlers::power_on))
+    // .route("/off", get(handlers::power_off))
 }
 
 #[derive(RustEmbed, Clone)]
