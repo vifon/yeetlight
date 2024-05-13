@@ -57,7 +57,6 @@ pub struct PowerParams {
 
 pub async fn power_on(
     Query(params): Query<PowerParams>,
-    State(mut state): State<AppState>,
 ) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
@@ -69,24 +68,6 @@ pub async fn power_on(
         .set_power(true, Effect::Smooth(500))
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-
-    if let Some((brightness, temperature)) = state.swap_saved_state(None) {
-        let _ = connection
-            .set_brightness(brightness, Effect::Sudden)
-            .await
-            .map_err(|e| {
-                warn!("Failed to set brightness: {e}");
-                e
-            });
-        let _ = connection
-            .set_temperature(temperature, Effect::Sudden)
-            .await
-            .map_err(|e| {
-                warn!("Failed to set temperature: {e}");
-                e
-            });
-    };
-
     Ok(Json(response))
 }
 pub async fn power_off(
@@ -95,15 +76,34 @@ pub async fn power_off(
 ) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
-    let response = bulb
+    let mut connection = bulb
         .connect()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .set_power(false, Effect::Smooth(500))
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     state.abort_alarm_task();
+
+    if let Some((brightness, temperature)) = state.swap_saved_state(None) {
+        let _ = connection
+            .set_brightness(brightness, Effect::Smooth(500))
+            .await
+            .map_err(|e| {
+                warn!("Failed to restore brightness: {e}");
+                e
+            });
+        let _ = connection
+            .set_temperature(temperature, Effect::Smooth(500))
+            .await
+            .map_err(|e| {
+                warn!("Failed to restore temperature: {e}");
+                e
+            });
+    };
+
+    let response = connection
+        .set_power(false, Effect::Smooth(500))
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(response))
 }
@@ -125,7 +125,7 @@ pub async fn power_toggle(
         .expect("Got a response but with no expected value");
     match power_state.as_str() {
         "on" => power_off(Query(params), State(state)).await,
-        "off" => power_on(Query(params), State(state)).await,
+        "off" => power_on(Query(params)).await,
         _ => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Unexpected light state: {power_state}"),
