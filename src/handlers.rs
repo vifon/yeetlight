@@ -14,33 +14,33 @@ use yeetlight::*;
 
 #[derive(Debug, Default, Clone)]
 pub struct AppState {
-    startup_state: Arc<Mutex<Option<(Brightness, Temperature)>>>,
+    saved_state: Arc<Mutex<Option<(Brightness, Temperature)>>>,
     alarm_task: Arc<Mutex<Option<AbortHandle>>>,
 }
 
 impl AppState {
     #[allow(dead_code)]
-    fn get_startup_state(self) -> Option<(Brightness, Temperature)> {
-        *self.startup_state.lock().unwrap()
+    fn get_saved_state(&self) -> Option<(Brightness, Temperature)> {
+        *self.saved_state.lock().unwrap()
     }
-    fn set_startup_state(self, value: Option<(Brightness, Temperature)>) {
-        *self.startup_state.lock().unwrap() = value;
+    fn set_saved_state(&self, value: Option<(Brightness, Temperature)>) {
+        *self.saved_state.lock().unwrap() = value;
     }
 
-    fn swap_startup_state(
-        self,
+    fn swap_saved_state(
+        &mut self,
         value: Option<(Brightness, Temperature)>,
     ) -> Option<(Brightness, Temperature)> {
-        let mut state = self.startup_state.lock().unwrap();
+        let mut state = self.saved_state.lock().unwrap();
         let old_state = state.clone();
         *state = value;
         old_state
     }
 
-    fn abort_alarm_task(self) {
+    fn abort_alarm_task(&mut self) {
         self.replace_alarm_task(None)
     }
-    fn replace_alarm_task(self, handle: Option<AbortHandle>) {
+    fn replace_alarm_task(&mut self, handle: Option<AbortHandle>) {
         let mut lock = self.alarm_task.lock().unwrap();
         if let Some(ref handle) = *lock {
             handle.abort();
@@ -57,7 +57,7 @@ pub struct PowerParams {
 
 pub async fn power_on(
     Query(params): Query<PowerParams>,
-    State(state): State<AppState>,
+    State(mut state): State<AppState>,
 ) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
@@ -70,7 +70,7 @@ pub async fn power_on(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    if let Some((brightness, temperature)) = state.clone().swap_startup_state(None) {
+    if let Some((brightness, temperature)) = state.swap_saved_state(None) {
         let _ = connection
             .set_brightness(brightness, Effect::Sudden)
             .await
@@ -91,7 +91,7 @@ pub async fn power_on(
 }
 pub async fn power_off(
     Query(params): Query<PowerParams>,
-    State(state): State<AppState>,
+    State(mut state): State<AppState>,
 ) -> Result<Json<Response>, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
@@ -135,7 +135,7 @@ pub async fn power_toggle(
 
 pub async fn morning_alarm(
     Query(params): Query<PowerParams>,
-    State(state): State<AppState>,
+    State(mut state): State<AppState>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     let bulb = Bulb::from_str(&params.bulb)
         .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, e.to_string()))?;
@@ -151,7 +151,7 @@ pub async fn morning_alarm(
         let props = connection.get_props(&["bright", "ct"]).await?;
         let brightness: Brightness = props[0].parse::<u16>().unwrap().into();
         let temperature: Temperature = props[1].parse::<u16>().unwrap().into();
-        state_clone.set_startup_state(Some((brightness, temperature)));
+        state_clone.set_saved_state(Some((brightness, temperature)));
 
         connection
             .set_brightness(Brightness::new(Brightness::MIN)?, Effect::Sudden)
