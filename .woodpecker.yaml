@@ -1,0 +1,8 @@
+when:
+  - event: [push, tag, pull_request, manual]
+
+steps:
+  - name: tests
+    image: rust:1.78.0
+    commands:
+      - cargo test --all-targets

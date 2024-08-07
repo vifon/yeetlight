@@ -1,0 +1,12 @@
+services:
+  app:
+    image: rust:1.78.0
+    volumes:
+      - type: bind
+        source: .
+        target: /src
+        read_only: true
+    working_dir: /src
+    environment:
+      CARGO_TARGET_DIR: /target
+    command: ["cargo", "test", "--all-targets"]
