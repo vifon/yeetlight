@@ -1,5 +1,7 @@
 # Yeetlight
 
+[![status-badge](https://ci.codeberg.org/api/badges/13628/status.svg)](https://ci.codeberg.org/repos/13628)
+
 Yeetlight is a lightweight Yeelight smartlights web control panel.
 
 It was created as a way so that I wouldn't *yeet* my *lights* when
