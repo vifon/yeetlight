@@ -1,5 +1,10 @@
 services:
   app:
+    image: yeetlight:latest
+    build: .
+    ports:
+      - "8080:8080"
+  test:
     image: rust:1.78.0
     volumes:
       - type: bind
