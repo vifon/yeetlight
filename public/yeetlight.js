@@ -1,6 +1,6 @@
 'use strict';
 
-axios.get("/config.json").then(res => {
+axios.get("config.json").then(res => {
   const config = res.data
   const initialState = {
     bulbs: {}
@@ -42,7 +42,7 @@ axios.get("/config.json").then(res => {
         case false:
           const addr = context.getters.addr(bulb)
           return axios.post(
-            "/" + (power ? "on" : "off") + "?bulb=" + addr
+            (power ? "on" : "off") + "?bulb=" + addr
           ).then(res => {
             context.commit('power', { bulb, power })
           })
@@ -56,7 +56,7 @@ axios.get("/config.json").then(res => {
         }
         const addr = context.getters.addr(bulb)
         return axios.post(
-          "/brightness?bulb=" + addr + "&brightness=" + brightness
+          "brightness?bulb=" + addr + "&brightness=" + brightness
         ).then(() => {
           context.commit('brightness', { bulb, brightness })
         })
@@ -67,7 +67,7 @@ axios.get("/config.json").then(res => {
         }
         const addr = context.getters.addr(bulb)
         return axios.post(
-          "/temperature?bulb=" + addr + "&temperature=" + temperature
+          "temperature?bulb=" + addr + "&temperature=" + temperature
         ).then(() => {
           context.commit('temperature', { bulb, temperature })
         })
@@ -78,7 +78,7 @@ axios.get("/config.json").then(res => {
         }
         const addr = context.getters.addr(bulb)
         return axios.post(
-          "/color?bulb=" + addr + "&rgb=" + color.substr(1)
+          "color?bulb=" + addr + "&rgb=" + color.substr(1)
         ).then(() => {
           context.commit('color', { bulb, color })
         })
@@ -221,7 +221,7 @@ axios.get("/config.json").then(res => {
       }
     },
     mounted() {
-      axios.get("/info?bulb=" + this.addr).then(res => {
+      axios.get("info?bulb=" + this.addr).then(res => {
         const info = res.data
         this.$store.commit('brightness', {
           bulb: this.name,
