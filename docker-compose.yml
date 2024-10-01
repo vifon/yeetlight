@@ -8,6 +8,8 @@ services:
   app-arm64:
     <<: *app
     platform: arm64
+    profiles:
+      - arm64
   test:
     image: rust:1.78.0
     volumes:
@@ -19,3 +21,5 @@ services:
     environment:
       CARGO_TARGET_DIR: /target
     command: ["cargo", "test", "--all-targets"]
+    profiles:
+      - test
