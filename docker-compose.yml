@@ -1,10 +1,13 @@
 services:
-  app:
+  app: &app
     image: yeetlight:latest
     build: .
     init: true
     ports:
       - "8080:8080"
+  app-arm64:
+    <<: *app
+    platform: arm64
   test:
     image: rust:1.78.0
     volumes:

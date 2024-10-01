@@ -1,7 +1,18 @@
-FROM rust:1.78.0 as builder
+FROM --platform=$BUILDPLATFORM rust:1.78.0 as builder
+COPY --from=tonistiigi/xx / /
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+
+RUN if [ "$TARGETPLATFORM" != "$BUILDPLATFORM" ]; then \
+      apt-get update && \
+      apt-get install -y gcc-"$(xx-info march)"-linux-gnu && \
+      apt-get clean && rm -rf /var/lib/apt/lists/*; \
+    fi
+
 WORKDIR /usr/src/yeetlight
 COPY . .
-RUN cargo install --path .
+RUN rustup target add "$(xx-info march)"-unknown-linux-gnu
+RUN cargo install --path=. --target="$(xx-info march)"-unknown-linux-gnu
 
 
 FROM debian:bookworm-slim

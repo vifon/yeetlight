@@ -3,3 +3,4 @@
 !/public/
 !/Cargo.toml
 !/Cargo.lock
+!/.cargo/
